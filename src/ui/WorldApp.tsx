@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
+import { MusicController } from "../audio/MusicController";
 import { useReveal } from "../hooks/useReveal";
 import { useWorld, worldStore } from "../world/store";
 import { FpsCounter, GameMenus, HudRestore, useMenuKeys } from "./GameMenu";
@@ -44,6 +45,7 @@ export default function WorldApp() {
       <GameMenus />
       {touch && <RotatePrompt />}
       <Loading />
+      <MusicController />
     </div>
   );
 }

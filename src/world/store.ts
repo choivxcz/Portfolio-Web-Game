@@ -17,6 +17,8 @@ export interface Prefs {
   character: "ranger" | "mage";
   outlines: boolean;
   ao: boolean;
+  music: boolean;
+  musicVolume: number; // 0–10
 }
 
 export const DEFAULT_PREFS: Prefs = {
@@ -34,6 +36,8 @@ export const DEFAULT_PREFS: Prefs = {
   character: "ranger",
   outlines: true,
   ao: true,
+  music: true,
+  musicVolume: 5,
 };
 
 /** Which full-screen menu is open over the world. */

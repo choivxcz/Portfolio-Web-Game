@@ -57,6 +57,8 @@ export function useMenuKeys() {
 
 /* ─────────────────────────────── Icons (original drawings) */
 const ICONS: Record<string, ReactElement> = {
+  sound: <path d="M4 9h4l5-4v14l-5-4H4zM16 8.5a5 5 0 0 1 0 7l-1.4-1.4a3 3 0 0 0 0-4.2zM18.5 6a8.5 8.5 0 0 1 0 12l-1.4-1.4a6.5 6.5 0 0 0 0-9.2z" />,
+  mute: <path d="M4 9h4l5-4v14l-5-4H4zM15.3 9.7l1.4-1.4 2.3 2.3 2.3-2.3 1.4 1.4-2.3 2.3 2.3 2.3-1.4 1.4-2.3-2.3-2.3 2.3-1.4-1.4 2.3-2.3z" />,
   menu: <path d="M7 3.5 10.5 7 7 10.5 3.5 7zM17 3.5 20.5 7 17 10.5 13.5 7zM7 13.5l3.5 3.5L7 20.5 3.5 17zM17 13.5l3.5 3.5-3.5 3.5-3.5-3.5z" />,
   gear: (
     <path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zm9 3.5-2.1-.6-.5-1.3 1-1.9-1.6-1.6-1.9 1-1.3-.5L14 3h-4l-.6 2.1-1.3.5-1.9-1L4.6 6.2l1 1.9-.5 1.3L3 10v4l2.1.6.5 1.3-1 1.9 1.6 1.6 1.9-1 1.3.5L10 21h4l.6-2.1 1.3-.5 1.9 1 1.6-1.6-1-1.9.5-1.3L21 14z" />
@@ -95,8 +97,12 @@ function RotateIcon() {
 
 /** HUD buttons in the top bar: the pause menu and the settings shortcut. */
 export function MenuButtons() {
+  const on = useWorld((s) => s.prefs.music);
   return (
     <div className="hud-menu-btns">
+      <button type="button" className="hud-gear" onClick={() => setPrefs({ music: !on })} aria-pressed={on} aria-label={on ? "Mute music" : "Play music"} title={on ? "Mute music" : "Play music"}>
+        <Icon name={on ? "sound" : "mute"} />
+      </button>
       <button type="button" className="hud-gear" onClick={() => worldStore.set({ menu: "pause" })} aria-label="Open menu (Esc)" title="Menu (Esc)">
         <Icon name="menu" />
       </button>
@@ -366,6 +372,20 @@ const TABS: { id: string; label: string; icon: string; options: Option[] }[] = [
       },
       { kind: "choice", id: "markers", label: "Landmark Markers", desc: "Floating names and distances above each landmark.", values: [{ v: false, label: "Hide" }, { v: true, label: "Show" }], get: pref("markers"), set: put("markers") },
       { kind: "choice", id: "guide", label: "Controls Guide", desc: "The key reminder in the bottom-left corner.", values: [{ v: false, label: "Hide" }, { v: true, label: "Show" }], get: pref("guide"), set: put("guide") },
+      { kind: "heading", id: "h-audio", label: "Audio" },
+      { kind: "choice", id: "music", label: "Music", desc: "An original pastoral theme that plays while you explore. It starts after your first click or tap.", values: onOff, get: pref("music"), set: put("music") },
+      {
+        kind: "slider",
+        id: "musicVolume",
+        label: "Music Volume",
+        desc: "How loud the music plays.",
+        min: 0,
+        max: 10,
+        step: 1,
+        get: (s) => s.prefs.musicVolume,
+        set: (v) => setPrefs({ musicVolume: v }),
+        format: (v) => String(v),
+      },
       { kind: "heading", id: "h-misc", label: "Misc" },
       {
         kind: "action",

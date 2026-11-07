@@ -710,3 +710,31 @@ kbd {
     animation: none;
   }
 }
+
+/* Narrow phones: keep every top-bar button full size by tightening the spacing */
+@media (max-width: 420px) {
+  .hud-bar {
+    gap: 4px;
+    padding: 0 6px 0 5px;
+  }
+  .hud-links {
+    flex: 1;
+    justify-content: space-evenly;
+    min-width: 0;
+  }
+  .hud-link {
+    flex-shrink: 0;
+    padding: 6px 5px;
+  }
+  .hud-link svg {
+    flex-shrink: 0;
+  }
+  .hud-menu-btns {
+    gap: 4px;
+  }
+  .hud-bar .nav-emblem,
+  .hud-gear {
+    width: 36px;
+    height: 36px;
+  }
+}
