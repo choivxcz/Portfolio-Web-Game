@@ -3,6 +3,7 @@ import { useReveal } from "../hooks/useReveal";
 import { useWorld, worldStore } from "../world/store";
 import { FpsCounter, GameMenus, HudRestore, useMenuKeys } from "./GameMenu";
 import { ControlsGuide, Loading, Prompt, TopBar, TravelFade } from "./Hud";
+import { RotatePrompt } from "./Landscape";
 import { JumpButton, Joystick, Minimap } from "./Minimap";
 import { WorldPanel } from "./WorldPanel";
 
@@ -41,6 +42,7 @@ export default function WorldApp() {
       <TravelFade />
       <WorldPanel />
       <GameMenus />
+      {touch && <RotatePrompt />}
       <Loading />
     </div>
   );

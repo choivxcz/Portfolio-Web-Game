@@ -7,6 +7,7 @@ import { profile } from "../data/profile";
 import { projects } from "../data/projects";
 import { skillGroups } from "../data/skills";
 import { LANDMARKS, type LandmarkId, type Quality } from "../world/config";
+import { canLockLandscape, playInLandscape } from "./Landscape";
 import { DEFAULT_PREFS, setPrefs, travelTo, useWorld, worldStore, type Prefs, type WorldState } from "../world/store";
 
 /* ─────────────────────────────────────────────────────────────
@@ -81,6 +82,17 @@ function Icon({ name, size = 20 }: { name: string; size?: number }) {
   );
 }
 
+/** A phone turning on its side. */
+function RotateIcon() {
+  return (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="8" width="18" height="10" rx="2" />
+      <path d="M8 4.5a6 6 0 0 1 8 0" />
+      <path d="M16 2v2.5h-2.5" />
+    </svg>
+  );
+}
+
 /** HUD buttons in the top bar: the pause menu and the settings shortcut. */
 export function MenuButtons() {
   return (
@@ -126,6 +138,9 @@ function PauseMenu() {
     ...LANDMARKS.map((L) => ({ key: L.id, label: SHORT[L.id], icon: <NavIcon name={L.id} size={26} />, onClick: () => go(L.id) })),
     { key: "settings", label: "Settings", icon: <Icon name="gear" size={26} />, onClick: () => worldStore.set({ menu: "settings" }) },
     { key: "hud", label: "Hide HUD", icon: <Icon name="eye" size={26} />, onClick: () => worldStore.set({ menu: null, hudHidden: true }) },
+    ...(canLockLandscape() && window.matchMedia("(pointer: coarse)").matches
+      ? [{ key: "landscape", label: "Landscape", icon: <RotateIcon />, onClick: () => { worldStore.set({ menu: null }); playInLandscape(); } }]
+      : []),
     { key: "github", label: "GitHub", icon: <GitHubIcon size={24} />, href: profile.links.github },
     { key: "classic", label: "Classic Page", icon: <Icon name="page" size={26} />, href: "?classic" },
   ];

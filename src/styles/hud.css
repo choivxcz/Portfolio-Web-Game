@@ -626,3 +626,87 @@ kbd {
     display: none;
   }
 }
+
+/* "Turn your phone sideways" prompt (phones held upright) */
+.rotate-prompt {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(14, 20, 38, 0.72);
+  backdrop-filter: blur(6px);
+  animation: gm-in 0.3s ease both;
+}
+.rotate-card {
+  width: min(340px, 100%);
+  padding: 26px 22px 20px;
+  border: 1px solid var(--gold);
+  border-radius: 12px;
+  background: var(--ivory-200);
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.8);
+  text-align: center;
+  color: var(--text-body);
+}
+.rotate-icon {
+  display: block;
+  margin: 0 auto;
+  transform-origin: 50% 50%;
+  color: var(--text-brown);
+  animation: rotate-hint 2.4s ease-in-out infinite;
+}
+@keyframes rotate-hint {
+  0%,
+  25% {
+    transform: rotate(0deg);
+  }
+  55%,
+  85% {
+    transform: rotate(-90deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+.rotate-card h2 {
+  margin: 12px 0 6px;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 400;
+  color: var(--text-strong);
+}
+.rotate-card p {
+  margin: 0 0 18px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+.rotate-actions {
+  display: grid;
+  gap: 8px;
+}
+.rotate-go,
+.rotate-stay {
+  padding: 12px 18px;
+  border-radius: 999px;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 700;
+  touch-action: manipulation;
+}
+.rotate-go {
+  border: 0;
+  background: var(--text-strong);
+  box-shadow: 0 0 0 2px var(--gold);
+  color: var(--ivory-200);
+}
+.rotate-stay {
+  border: 1px solid var(--gold);
+  background: transparent;
+  color: var(--text-brown);
+}
+@media (prefers-reduced-motion: reduce) {
+  .rotate-icon {
+    animation: none;
+  }
+}
