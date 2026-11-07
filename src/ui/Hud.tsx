@@ -85,7 +85,7 @@ export function ControlsGuide({ touch }: { touch: boolean }) {
     }
   }, [open]);
   const rows: [string, string][] = touch
-    ? [["Left stick", "Move"], ["Drag", "Look around"], ["↑ button", "Jump"], ["Tap prompt", "Interact"]]
+    ? [["Left stick", "Move"], ["Drag", "Look around"], ["Pinch", "Zoom"], ["↑ button", "Jump"], ["Tap prompt", "Interact"]]
     : GUIDE;
   if (!enabled) return null;
   return (

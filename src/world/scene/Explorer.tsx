@@ -65,9 +65,22 @@ export function Explorer({ colliders }: { colliders: Collider[] }) {
     const up = (e: KeyboardEvent) => input.keys.delete(e.code);
     const blur = () => input.keys.clear();
     let dragging = false;
+    // Touches that started on the world (the joystick and buttons are separate elements):
+    // one finger looks around, two fingers pinch to zoom.
+    const touches = new Map<number, { x: number; y: number }>();
+    const pinch = () => {
+      const [a, b] = [...touches.values()];
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    };
+    let pinchDist = 0;
     const onDown = (e: PointerEvent) => {
       const st = worldStore.get();
-      if (e.pointerType === "mouse" && e.button === 0 && !st.panel && !st.menu) {
+      if (e.pointerType !== "mouse") {
+        touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (touches.size === 2) pinchDist = pinch();
+        return;
+      }
+      if (e.button === 0 && !st.panel && !st.menu) {
         if (document.pointerLockElement !== el) el.requestPointerLock?.();
       }
       dragging = true;
@@ -78,15 +91,38 @@ export function Explorer({ colliders }: { colliders: Collider[] }) {
       }
     };
     const onMove = (e: PointerEvent) => {
+      const { sensitivity, invertY } = worldStore.get().prefs;
+      if (e.pointerType !== "mouse") {
+        const t = touches.get(e.pointerId);
+        if (!t) return; // a finger on the joystick or a button
+        const dx = e.clientX - t.x;
+        const dy = e.clientY - t.y;
+        t.x = e.clientX;
+        t.y = e.clientY;
+        if (touches.size === 1) {
+          const k = 0.0055 * (sensitivity / 5);
+          input.lookX += dx * k;
+          input.lookY += dy * k * (invertY ? -1 : 1);
+        } else if (touches.size === 2) {
+          const d = pinch();
+          input.zoom -= (d - pinchDist) * 0.06;
+          pinchDist = d;
+        }
+        return;
+      }
       const locked = document.pointerLockElement === el;
-      if (locked || (dragging && e.pointerType !== "mouse") || (dragging && e.buttons)) {
-        const { sensitivity, invertY } = worldStore.get().prefs;
-        const k = (e.pointerType === "touch" ? 0.0055 : 0.0024) * (sensitivity / 5);
+      if (locked || (dragging && e.buttons)) {
+        const k = 0.0024 * (sensitivity / 5);
         input.lookX += e.movementX * k;
         input.lookY += e.movementY * k * (invertY ? -1 : 1);
       }
     };
-    const onUp = () => {
+    const onUp = (e: PointerEvent) => {
+      if (e.pointerType !== "mouse") {
+        touches.delete(e.pointerId);
+        if (touches.size === 2) pinchDist = pinch();
+        return;
+      }
       dragging = false;
     };
     const onWheel = (e: WheelEvent) => {
@@ -100,6 +136,7 @@ export function Explorer({ colliders }: { colliders: Collider[] }) {
     el.addEventListener("pointerdown", onDown);
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
     el.addEventListener("wheel", onWheel, { passive: true });
     document.addEventListener("pointerlockchange", onLock);
     return () => {
@@ -109,6 +146,7 @@ export function Explorer({ colliders }: { colliders: Collider[] }) {
       el.removeEventListener("pointerdown", onDown);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
       el.removeEventListener("wheel", onWheel);
       document.removeEventListener("pointerlockchange", onLock);
     };
