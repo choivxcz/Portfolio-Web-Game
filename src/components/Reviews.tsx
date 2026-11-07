@@ -11,7 +11,7 @@ const ENDPOINT = "https://api.web3forms.com/submit";
 const MIN = 20;
 const MAX = 1000;
 const WORDS = ["", "Poor", "Fair", "Good", "Great", "Excellent"];
-const RELATIONSHIPS = ["Classmate", "Teammate", "Professor or teacher", "Client", "Recruiter", "Other"];
+const RELATIONSHIPS = ["Classmate", "Groupmate", "Schoolmate", "Client", "Recruiter", "Other"];
 
 type Field = "rating" | "email" | "message";
 type Errors = Partial<Record<Field, string>>;
