@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { places } from "../data/places";
 import { projectCategories, projects, type Project } from "../data/projects";
 import { ArrowIcon, CompassIcon, ExternalIcon, GitHubIcon } from "./Icons";
+import { RepoArchive } from "./RepoArchive";
 import { ProjectModal } from "./ProjectModal";
 import { RegionArt } from "./scene/RegionArt";
 import { SectionHeader } from "./SectionHeader";
@@ -124,6 +125,8 @@ export function Projects() {
             <ArchiveCard key={p.id} p={p} onOpen={setOpen} />
           ))}
         </div>
+
+        <RepoArchive />
       </div>
 
       <ProjectModal project={open} onClose={close} renderVisual={(p) => <ProjectBanner p={p} variant="modal" />} />

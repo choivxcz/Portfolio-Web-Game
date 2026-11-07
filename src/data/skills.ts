@@ -1,4 +1,5 @@
 import type { Element } from "./elements";
+import github from "./github.json";
 
 /**
  * Skills are grouped by category, and every skill lists the projects that
@@ -37,6 +38,7 @@ export const skillGroups: SkillGroup[] = [
       { name: "Dart", evidence: ["Peso Pilot"] },
       { name: "C#", evidence: ["Bugtong Buhay"] },
       { name: "GAML", evidence: ["Classroom simulation"] },
+      { name: "R", evidence: ["University Policy Knowledge Base (CSST101)"] },
     ],
   },
   {
@@ -53,6 +55,8 @@ export const skillGroups: SkillGroup[] = [
       { name: "Tailwind CSS", evidence: ["Iskolar ng Bayan (Web)"] },
       { name: "Framer Motion", evidence: ["Iskolar ng Bayan (Web)"] },
       { name: "HTML & CSS", evidence: ["Internship Monitoring System", "This portfolio"] },
+      { name: "three.js & React Three Fiber", evidence: ["This 3D portfolio"] },
+      { name: "Web Audio API", evidence: ["This 3D portfolio — synthesized music"] },
     ],
   },
   {
@@ -112,7 +116,8 @@ export const skillGroups: SkillGroup[] = [
     skills: [
       { name: "PyQt6 / PyQt5", evidence: ["Iskolar ng Bayan", "Market Sales Tracker"] },
       { name: "Flutter", evidence: ["Peso Pilot"] },
-      { name: "Unity", evidence: ["Bugtong Buhay"] },
+      { name: "Unity 6 (HDRP)", evidence: ["Bugtong Buhay"] },
+      { name: "Game AI (state machines, NavMesh)", evidence: ["Bugtong Buhay — the manananggal"] },
     ],
   },
   {
@@ -123,7 +128,8 @@ export const skillGroups: SkillGroup[] = [
     epithet: "Instruments of the craft",
     description: "The everyday toolkit behind the projects — version control, notebooks, simulation, and AI APIs.",
     skills: [
-      { name: "Git & GitHub", evidence: ["15 public repositories"] },
+      { name: "Git & GitHub", evidence: [`${github.user.publicRepos} public repositories`] },
+      { name: "GitHub Actions", evidence: ["This portfolio — build, GitHub sync and deploy"] },
       { name: "Automated tests", evidence: ["Iskolar ng Bayan — 13 test modules"] },
       { name: "GAMA Platform", evidence: ["Classroom simulation"] },
       { name: "LLM APIs (OpenRouter)", evidence: ["Peso Pilot"] },

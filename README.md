@@ -65,6 +65,7 @@ Everything personal lives in `src/data/`. You should not need to touch component
 | `src/data/skills.ts` | Skill categories, each skill with the projects that show it |
 | `src/data/journey.ts` | Timeline stops |
 | `src/data/achievements.ts` | Milestones (add honors / leadership here) |
+| `src/data/github.json` | Snapshot of your public repositories for the Repository Archive (bottom of Projects). Refreshed automatically on every deploy; run `npm run sync:github` to refresh it locally |
 
 ### Still to fill in
 

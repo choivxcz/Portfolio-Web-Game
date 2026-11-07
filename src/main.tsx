@@ -14,6 +14,7 @@ import "./styles/modal.css";
 import "./styles/achievements.css";
 import "./styles/contact.css";
 import "./styles/reviews.css";
+import "./styles/repos.css";
 import "./styles/footer.css";
 import "./styles/hud.css";
 import "./styles/panel.css";

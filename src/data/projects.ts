@@ -112,18 +112,21 @@ export const projects: Project[] = [
     year: "2026",
     status: "Mobile app · course final project",
     summary:
-      "An AI-integrated finance app for tracking income and expenses, with an assistant that gives advice and summarises your spending.",
+      "A Flutter app for recording income and expenses, with an AI assistant that answers questions about your month of spending.",
     problem:
       "Most people log expenses but rarely learn from them. Peso Pilot turns transactions into monthly summaries and a conversational assistant that explains where the money went.",
     highlights: [
-      "Income and expense tracking per category, with charts and history views",
-      "Financial chat assistant that reads a monthly summary of the user's transactions",
-      "Firebase authentication and Cloud Firestore storage",
-      "AI requests routed through a small Vercel serverless backend so the API key never ships inside the app",
+      "Accounts with registration, sign-in and password reset through Firebase Authentication",
+      "A ledger of income and expenses by category, organised by month in Cloud Firestore, with archiving",
+      "Spending by category as pie charts (fl_chart)",
+      "A chat assistant whose context is the month's totals and category breakdown compared with the previous month, not every transaction",
+      "The app never holds the AI key: chat goes through a Vercel serverless proxy (with a Firebase Cloud Functions alternative) that keeps the OpenRouter key on the server and validates each message",
     ],
-    tech: ["Flutter", "Dart", "Firebase", "Cloud Firestore", "fl_chart", "Vercel", "OpenRouter"],
-    repos: [{ label: "Source (flutter_try)", href: gh("flutter_try") }],
-    note: "The app's code lives in the flutter_try repository under lib/final_project.",
+    tech: ["Flutter", "Dart", "Firebase Auth", "Cloud Firestore", "fl_chart", "Vercel Functions", "OpenRouter"],
+    repos: [
+      { label: "App source", href: gh("Peso-Pilot-App") },
+      { label: "Original version", href: gh("Flutter_Project") },
+    ],
     rarity: 4,
     size: "tall",
   },
@@ -137,18 +140,21 @@ export const projects: Project[] = [
       "Natlan honours its ancestors and the stories its tribes pass down by firelight — like a game built from Filipino folklore.",
     category: "Mobile & Games",
     year: "2026",
-    status: "Unity project",
+    status: "Unity 6 game · gameplay scripts public",
     summary:
-      "A first-person 3D horror game in Unity drawing on Filipino folklore — featuring a manananggal and household talismans as collectible items.",
+      "A first-person horror game in Unity 6 based on Filipino folklore: solve the riddles (bugtong) hidden around a house to find the key and escape, while a manananggal hunts you.",
     problem:
       "A playable way to bring local folklore into an atmospheric, exploration-driven horror experience.",
     highlights: [
-      "First-person exploration with interactable objects, an inventory, and dialogue",
-      "Collectibles rooted in folklore: candles and garlic, a walis tambo, a doll, a crow, a clock",
-      "Built with C# scripts on top of Unity asset packs for environments and controls",
+      "The manananggal is a six-state AI (roam, investigate, search, chase, attack, check hiding place) that navigates with Unity's NavMesh, flying higher while roaming and lower on the hunt",
+      "Sound matters: walking is audible, running is loud, crouching is almost silent, and louder noises carry farther",
+      "Riddles, keys, doors, a chest, item pickups, hiding in cabinets, and respawning",
+      "Footsteps, room and altar triggers, enemy sounds and random ambience; menus, loading and ending scenes",
+      "Built in Unity 6 with the High Definition Render Pipeline",
     ],
-    tech: ["Unity", "C#", "ShaderLab"],
-    repos: [{ label: "Repository", href: gh("Bugtong-Buhay") }],
+    tech: ["Unity 6", "C#", "HDRP", "NavMesh", "Input System", "TextMeshPro"],
+    repos: [{ label: "Gameplay scripts", href: gh("Bugtong-Buhay-Scripts") }],
+    note: "The full Unity project is private because it includes licensed Asset Store packages; the C# scripts I wrote are public.",
     rarity: 4,
     size: "tall",
   },
@@ -197,7 +203,10 @@ export const projects: Project[] = [
       "Practice datasets covering sales, students, and medical records",
     ],
     tech: ["Python", "NumPy", "pandas", "scikit-learn", "Jupyter"],
-    repos: [{ label: "Repository", href: gh("Machine-Learning") }],
+    repos: [
+      { label: "Repository", href: gh("Machine-Learning") },
+      { label: "DataCamp: Intermediate Python", href: gh("Data-Camp-Intermediate-Python") },
+    ],
     rarity: 3,
     size: "compact",
   },
@@ -239,4 +248,93 @@ export const projects: Project[] = [
     rarity: 3,
     size: "compact",
   },
+  {
+    id: "portfolioworld",
+    name: "This 3D Portfolio",
+    realm: "Interactive web",
+    element: "anemo",
+    region: "dragonspine",
+    regionNote:
+      "Dragonspine is the mountain you can see from anywhere in the valley — like this world, which you're standing in right now.",
+    category: "Web Systems",
+    year: "2026",
+    status: "Live · you are here",
+    summary:
+      "The world you're exploring: a portfolio built as a small open-world game in the browser, where every landmark opens a section.",
+    problem:
+      "A portfolio people actually want to explore, that still works as a plain page for anyone who can't or doesn't want to play.",
+    highlights: [
+      "Procedural terrain, cliffs, mountains, water and grass, all generated in code with a cel-shaded look",
+      "Third-person explorer with collisions, teleporting, a minimap, and touch controls for phones",
+      "An original background theme synthesized in the browser, with no audio files",
+      "Private reviews sent through Web3Forms, and a Repository Archive synced from GitHub on every deploy",
+      "A classic scrolling page as a fallback when 3D isn't available",
+    ],
+    tech: ["TypeScript", "React", "three.js", "React Three Fiber", "Web Audio", "Vite", "GitHub Actions"],
+    repos: [{ label: "Repository", href: gh("Portfolio-Web-Game") }],
+    rarity: 4,
+    size: "compact",
+  },
+  {
+    id: "supervised",
+    name: "Supervised Learning Lab",
+    realm: "Coursework · CSST102",
+    element: "cryo",
+    region: "chasm",
+    regionNote:
+      "The Chasm is mined layer by layer, each find tested before it's trusted — like a dataset explored, split, and evaluated.",
+    category: "AI & Data",
+    year: "2026",
+    status: "Coursework · CSST102 & CSST101",
+    summary:
+      "Complete supervised machine-learning pipelines in Python: explore a dataset, split it, train a k-nearest neighbours classifier, and evaluate it.",
+    problem: "Learning to run the whole pipeline end to end, the same way on different datasets.",
+    highlights: [
+      "Iris dataset: exploration, visualisation, train-test split, k-nearest neighbours and accuracy",
+      "UCI Wine dataset: the same pipeline with feature selection and a confusion matrix",
+      "A k-nearest neighbours exercise in scikit-learn, with a written assessment",
+    ],
+    tech: ["Python", "scikit-learn", "pandas", "NumPy", "Matplotlib", "Google Colab"],
+    repos: [
+      { label: "CSST102 notebooks", href: gh("Cuerdo-CSST102-CS3B") },
+      { label: "CSST101 ML exercise", href: gh("Cuerdo-CSST101-CS3B") },
+    ],
+    rarity: 3,
+    size: "compact",
+  },
+  {
+    id: "policykb",
+    name: "University Policy Knowledge Base",
+    realm: "Coursework · CSST101",
+    element: "hydro",
+    region: "enkanomiya",
+    regionNote:
+      "Enkanomiya is a hidden world that runs by its own written laws — like a system that reasons from a set of rules.",
+    category: "AI & Data",
+    year: "2026",
+    status: "Coursework · R notebooks",
+    summary: "A knowledge-based system for university policies, and a course enrollment database, both written in R.",
+    problem: "Turning written rules into something a program can reason with and answer questions from.",
+    highlights: [
+      "A knowledge-based system that encodes university policies as rules",
+      "A course enrollment database implemented in R",
+      "Earlier labs on R variables, operators, user input and data frames",
+    ],
+    tech: ["R", "Google Colab", "Jupyter"],
+    repos: [{ label: "Repository", href: gh("Cuerdo-CSST101-CS3B") }],
+    rarity: 3,
+    size: "compact",
+  },
 ];
+
+/** Which project each public repository belongs to (used by the Repository Archive). */
+export const repoProject: Record<string, string> = {};
+// a project's main (first) repository claims it before any project that only links it
+for (const pass of [0, 1]) {
+  for (const p of projects) {
+    p.repos.forEach((r, i) => {
+      if ((i === 0) !== (pass === 0)) return;
+      repoProject[r.href.split("/").pop()!] ??= p.name;
+    });
+  }
+}

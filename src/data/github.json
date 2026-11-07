@@ -1,0 +1,179 @@
+{
+  "fetchedAt": "2026-11-07T12:50:35.112Z",
+  "user": {
+    "login": "choivxcz",
+    "name": "Karl Sebastian V. Cuerdo",
+    "location": "Manila, Philippines",
+    "hireable": true,
+    "publicRepos": 15,
+    "createdAt": "2025-01-22T12:15:40Z",
+    "htmlUrl": "https://github.com/choivxcz"
+  },
+  "repos": [
+    {
+      "name": "Market_Sales_Tracker",
+      "description": "Desktop application in Python and PyQt5 for recording and charting the daily sales of a small business.",
+      "language": "Python",
+      "htmlUrl": "https://github.com/choivxcz/Market_Sales_Tracker",
+      "homepage": null,
+      "createdAt": "2025-07-11T04:31:34Z",
+      "pushedAt": "2026-10-30T01:06:27Z",
+      "sizeKb": 6,
+      "archived": false
+    },
+    {
+      "name": "Market-Price-Predictor-Console-Only-",
+      "description": "This project/repository is a Market Price Predictor. Users can Add and Update the Price of the specific product. This project uses matplotlib to visualize the trend of a specific product.",
+      "language": "Python",
+      "htmlUrl": "https://github.com/choivxcz/Market-Price-Predictor-Console-Only-",
+      "homepage": null,
+      "createdAt": "2025-08-25T03:36:43Z",
+      "pushedAt": "2026-10-30T01:19:47Z",
+      "sizeKb": 4,
+      "archived": false
+    },
+    {
+      "name": "Flutter_Project",
+      "description": "Flutter and Dart practice exercises, including the original version of Peso Pilot.",
+      "language": "Dart",
+      "htmlUrl": "https://github.com/choivxcz/Flutter_Project",
+      "homepage": null,
+      "createdAt": "2025-09-16T00:25:58Z",
+      "pushedAt": "2026-10-30T01:09:10Z",
+      "sizeKb": 12236,
+      "archived": false
+    },
+    {
+      "name": "Cuerdo-CSEL302-CS2B",
+      "description": null,
+      "language": "GAML",
+      "htmlUrl": "https://github.com/choivxcz/Cuerdo-CSEL302-CS2B",
+      "homepage": null,
+      "createdAt": "2026-02-19T00:29:55Z",
+      "pushedAt": "2026-10-30T01:19:52Z",
+      "sizeKb": 3910,
+      "archived": false
+    },
+    {
+      "name": "Peso-Pilot-App",
+      "description": "Flutter and Firebase application for recording income and expenses, with an AI assistant for monthly spending summaries.",
+      "language": "Dart",
+      "htmlUrl": "https://github.com/choivxcz/Peso-Pilot-App",
+      "homepage": null,
+      "createdAt": "2026-05-04T23:59:42Z",
+      "pushedAt": "2026-10-30T01:09:37Z",
+      "sizeKb": 2022,
+      "archived": false
+    },
+    {
+      "name": "Bugtong-Buhay-Scripts",
+      "description": "C# gameplay scripts for Bugtong Buhay, a first-person horror game in Unity 6 based on Filipino folklore.",
+      "language": "C#",
+      "htmlUrl": "https://github.com/choivxcz/Bugtong-Buhay-Scripts",
+      "homepage": null,
+      "createdAt": "2026-05-20T14:32:10Z",
+      "pushedAt": "2026-10-30T01:25:15Z",
+      "sizeKb": 135,
+      "archived": false
+    },
+    {
+      "name": "git-and-github-journey",
+      "description": "In this repo, I am learning Git and Github",
+      "language": null,
+      "htmlUrl": "https://github.com/choivxcz/git-and-github-journey",
+      "homepage": null,
+      "createdAt": "2026-06-26T14:59:34Z",
+      "pushedAt": "2026-10-30T01:19:56Z",
+      "sizeKb": 2,
+      "archived": false
+    },
+    {
+      "name": "Machine-Learning",
+      "description": "Notebooks and exercises in machine learning with Python, from NumPy and pandas to scikit-learn models.",
+      "language": "Jupyter Notebook",
+      "htmlUrl": "https://github.com/choivxcz/Machine-Learning",
+      "homepage": null,
+      "createdAt": "2026-06-26T15:25:09Z",
+      "pushedAt": "2026-10-30T01:09:22Z",
+      "sizeKb": 203,
+      "archived": false
+    },
+    {
+      "name": "Cuerdo-CSST101-CS3B",
+      "description": "CSST101 coursework (BSCS 3-B): R notebooks, a knowledge-based system, and a machine learning exercise.",
+      "language": "Jupyter Notebook",
+      "htmlUrl": "https://github.com/choivxcz/Cuerdo-CSST101-CS3B",
+      "homepage": null,
+      "createdAt": "2026-08-24T08:55:21Z",
+      "pushedAt": "2026-10-30T01:08:18Z",
+      "sizeKb": 33,
+      "archived": false
+    },
+    {
+      "name": "Data-Camp-Intermediate-Python",
+      "description": "Exercises for the DataCamp Intermediate Python course: Matplotlib, dictionaries, and pandas.",
+      "language": "Python",
+      "htmlUrl": "https://github.com/choivxcz/Data-Camp-Intermediate-Python",
+      "homepage": null,
+      "createdAt": "2026-08-26T06:53:39Z",
+      "pushedAt": "2026-10-30T01:08:46Z",
+      "sizeKb": 5,
+      "archived": false
+    },
+    {
+      "name": "Cuerdo-CSST102-CS3B",
+      "description": "CSST102 coursework (BSCS 3-B): supervised machine learning pipelines in Python.",
+      "language": "Jupyter Notebook",
+      "htmlUrl": "https://github.com/choivxcz/Cuerdo-CSST102-CS3B",
+      "homepage": null,
+      "createdAt": "2026-09-09T06:21:34Z",
+      "pushedAt": "2026-10-30T01:08:32Z",
+      "sizeKb": 337,
+      "archived": false
+    },
+    {
+      "name": "AI-Assisted-Scholarship-Applicant-Screening-and-Management-System",
+      "description": "AI-Assisted Scholarship Applicant Screening and Management System for the Local Youth Development Office (LYDO) of Santa Cruz, Laguna Using Machine Learning",
+      "language": "Python",
+      "htmlUrl": "https://github.com/choivxcz/AI-Assisted-Scholarship-Applicant-Screening-and-Management-System",
+      "homepage": null,
+      "createdAt": "2026-10-04T16:27:54Z",
+      "pushedAt": "2026-11-06T17:13:07Z",
+      "sizeKb": 6438,
+      "archived": false
+    },
+    {
+      "name": "College-Internship-Monitoring-and-Management-System",
+      "description": "Web-based prototype for monitoring student internships: placements, applications, required documents, and rendered hours.",
+      "language": "TypeScript",
+      "htmlUrl": "https://github.com/choivxcz/College-Internship-Monitoring-and-Management-System",
+      "homepage": null,
+      "createdAt": "2026-10-16T13:52:59Z",
+      "pushedAt": "2026-11-06T13:32:02Z",
+      "sizeKb": 43667,
+      "archived": false
+    },
+    {
+      "name": "IskoMatic",
+      "description": null,
+      "language": "JavaScript",
+      "htmlUrl": "https://github.com/choivxcz/IskoMatic",
+      "homepage": null,
+      "createdAt": "2026-10-23T13:28:14Z",
+      "pushedAt": "2026-10-30T01:19:43Z",
+      "sizeKb": 3985,
+      "archived": false
+    },
+    {
+      "name": "Portfolio-Web-Game",
+      "description": null,
+      "language": "TypeScript",
+      "htmlUrl": "https://github.com/choivxcz/Portfolio-Web-Game",
+      "homepage": null,
+      "createdAt": "2026-11-07T07:38:59Z",
+      "pushedAt": "2026-11-07T12:12:36Z",
+      "sizeKb": 2381,
+      "archived": false
+    }
+  ]
+}

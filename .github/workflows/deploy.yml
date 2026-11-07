@@ -26,6 +26,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # refresh the Repository Archive from GitHub (keeps the committed snapshot if the API is unreachable)
+      - run: npm run sync:github
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: npm run build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

@@ -1,4 +1,5 @@
 import type { Element } from "./elements";
+import github from "./github.json";
 
 /**
  * MILESTONES — only verifiable accomplishments drawn from public work.
@@ -66,9 +67,44 @@ export const milestones: Milestone[] = [
   {
     title: "First commit, first project",
     category: "Exploration",
-    detail: "Published Market Sales Tracker as a first-year student — the start of 15 public repositories.",
+    detail: `Published Market Sales Tracker as a first-year student — the start of ${github.user.publicRepos} public repositories.`,
     date: "Jul 2025",
     element: "anemo",
     numeral: "VI",
+  },
+  {
+    title: "A monster that listens",
+    category: "Software Craft",
+    detail:
+      "Gave Bugtong Buhay's manananggal a six-state AI on Unity's NavMesh that hunts by sight and by sound: running is loud, crouching is almost silent.",
+    date: "May 2026",
+    element: "pyro",
+    numeral: "VII",
+  },
+  {
+    title: "A key that never ships",
+    category: "Software Craft",
+    detail:
+      "Kept Peso Pilot's AI key off the phone: chat goes through a serverless proxy that holds the key and validates every message.",
+    date: "2026",
+    element: "geo",
+    numeral: "VIII",
+  },
+  {
+    title: "Learning in the open",
+    category: "Exploration",
+    detail:
+      "Published coursework and self-study on GitHub: supervised-learning pipelines, a knowledge-based system in R, and DataCamp's Intermediate Python.",
+    date: "Aug – Sep 2026",
+    element: "cryo",
+    numeral: "IX",
+  },
+  {
+    title: "A world of my own",
+    category: "Exploration",
+    detail: "Built this portfolio as an explorable 3D world, with procedural terrain, synthesized music, and a classic page for everyone else.",
+    date: "Nov 2026",
+    element: "anemo",
+    numeral: "X",
   },
 ];

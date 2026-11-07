@@ -3,6 +3,7 @@ import { CloseIcon, GitHubIcon } from "../components/Icons";
 import { NavIcon } from "../components/NavIcons";
 import { Sigil } from "../components/Sigil";
 import { milestones } from "../data/achievements";
+import github from "../data/github.json";
 import { profile } from "../data/profile";
 import { projects } from "../data/projects";
 import { skillGroups } from "../data/skills";
@@ -175,6 +176,10 @@ function PauseMenu() {
           <div>
             <dt>Achievements</dt>
             <dd>{milestones.length}</dd>
+          </div>
+          <div>
+            <dt>Repositories</dt>
+            <dd>{github.user.publicRepos}</dd>
           </div>
           <div>
             <dt>Region</dt>
