@@ -1,6 +1,6 @@
 import { BRIDGE, ISLAND, LAKE, LANDMARKS, PATHS, PATH_WIDTH, PLAY_CENTER, PLAY_RADIUS, STREAM, WATER_LEVEL, WORLD_SIZE, type Vec2 } from "./config";
 import { createNoise, fbm, lerp, smoothstep } from "./noise";
-import { HOUSES, PROPS, RUINS, WINDMILL } from "./layout";
+import { GROVES, HOUSES, PROPS, WINDMILL } from "./layout";
 
 const nA = createNoise(11);
 const nB = createNoise(23);
@@ -44,8 +44,8 @@ function terrace(h: number) {
   const t = h / TERRACE;
   return (Math.floor(t) + smoothstep(0.34, 0.66, t - Math.floor(t))) * TERRACE;
 }
-/** Areas kept smooth: the village, ruins and the stream bank below the Academy (paths are handled separately). */
-const SMOOTH_ZONES: [number, number, number][] = [[5, -58, 36], [42, -6, 12], ...RUINS.map((r) => [r.x, r.z, 10] as [number, number, number])];
+/** Areas kept smooth: the village, the groves and the stream bank below the Academy (paths are handled separately). */
+const SMOOTH_ZONES: [number, number, number][] = [[5, -58, 36], [42, -6, 12], ...GROVES.map((g) => [g.x, g.z, 10] as [number, number, number])];
 
 function detail(x: number, z: number) {
   return fbm(nB, x * 0.02, z * 0.02, 3) * 2.6 + fbm(nC, x * 0.075, z * 0.075, 2) * 0.45;

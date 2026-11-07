@@ -24,8 +24,8 @@ interface Layer {
 
 const LAYERS: Layer[] = [
   { r0: 430, r1: 690, base: 18, amp: 225, freq: 2.2, seed: 11, low: "#7fa673", high: "#8d9fb9", rock: "#7d8aa3", snow: 150 },
-  { r0: 650, r1: 1010, base: 28, amp: 300, freq: 1.8, seed: 23, low: "#8ea6c2", high: "#9aaecb", rock: "#8796b3", snow: 228 },
-  { r0: 970, r1: 1420, base: 40, amp: 350, freq: 1.4, seed: 37, low: "#a6badb", high: "#acbfdc", rock: "#9eb0cf", snow: 245 },
+  { r0: 650, r1: 1010, base: 28, amp: 300, freq: 1.8, seed: 23, low: "#7d9c8a", high: "#8fa3c2", rock: "#7f8eac", snow: 228 },
+  { r0: 970, r1: 1420, base: 40, amp: 350, freq: 1.4, seed: 37, low: "#93aacb", high: "#9fb4d4", rock: "#92a5c6", snow: 245 },
 ];
 
 /** Prominent snowy peaks: direction (x = cos a, z = sin a), layer, position across it, height, width. */
@@ -120,7 +120,7 @@ function mountainMaterial(L: Layer) {
     uniforms: {
       uSun: { value: SUN_DIR },
       uSky: { value: new THREE.Color(SKY.horizon) },
-      uHaze: { value: new THREE.Vector2(300, 1550) },
+      uHaze: { value: new THREE.Vector2(450, 1900) },
       uRock: { value: new THREE.Color(L.rock) },
       uSnow: { value: L.snow - 15 },
     },
@@ -203,7 +203,7 @@ void main(){
   // air is thinner higher up: summits stay crisper than the hazy foothills
   haze *= 1.0 - 0.35 * smoothstep(60.0, 380.0, h);
   float valley = 1.0 - smoothstep(-10.0, 150.0, h);
-  haze = clamp(haze * 0.72 + valley * 0.26, 0.0, 0.86);
+  haze = clamp(haze * 0.6 + valley * 0.18, 0.0, 0.75);
   gl_FragColor = vec4(mix(c, uSky, haze), 1.0);
   #include <colorspace_fragment>
 }`,

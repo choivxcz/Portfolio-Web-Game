@@ -8,19 +8,24 @@ import { withDetail } from "./structures/detail";
 import { toonRamp } from "./Vegetation";
 
 /**
- * Cliff mesas around the valley: layered pale-stone walls with bulging ledges,
- * smooth shading plus a natural rock-strata texture, and an overhanging grassy cap.
+ * Cliff mesas around the valley, sculpted rather than smooth: vertical buttresses and
+ * cracks, stepped strata whose lower edges overhang (so each band casts a shadow line),
+ * darker recesses, moss on the ledges, and an overhanging grassy cap.
  */
-const STONE_LOW = new THREE.Color("#93a0b5");
-const STONE_HIGH = new THREE.Color("#c9d0dc");
+const STONE_LOW = new THREE.Color("#8793aa");
+const STONE_HIGH = new THREE.Color("#c6cdd9");
+const STONE_WARM = new THREE.Color("#c9bfae");
+const MOSS = new THREE.Color("#7f9f55");
 const GRASS = new THREE.Color("#7db649");
 const GRASS_LIGHT = new THREE.Color("#a3cf5b");
 
 function mesaGeometry(m: Mesa, noise: Noise2D) {
   const r = rng(m.seed * 31 + 7);
-  const segs = 22;
-  const levels = 9;
+  const segs = 64;
+  const levels = 24;
   const H = m.top - m.base;
+  const bands = 3 + Math.floor(r() * 3); // strata steps up the face
+  const phase = r() * 10;
   const pos: number[] = [];
   const col: number[] = [];
   const idx: number[] = [];
@@ -28,15 +33,31 @@ function mesaGeometry(m: Mesa, noise: Noise2D) {
   // stone rings (shared vertices → smooth shading)
   for (let k = 0; k <= levels; k++) {
     const t = k / levels;
-    const ledge = k > 0 && k < levels && k % 2 === 1 ? 0.93 : 1;
-    const taper = 1 - t * 0.18;
+    const local = (t * bands) % 1; // 0 at the bottom of a band, → 1 at its top
+    const taper = 1 - t * 0.16;
     for (let i = 0; i < segs; i++) {
       const a = (i / segs) * Math.PI * 2;
-      const nz = noise(Math.cos(a) * 1.5 + m.seed * 3.1, Math.sin(a) * 1.5 + k * 0.35);
-      const rad = m.r * taper * ledge * (1 + nz * 0.22);
-      const y = m.base + t * H + (k > 0 && k < levels ? (r() - 0.5) * (H / levels) * 0.3 : 0);
-      pos.push(m.x + Math.cos(a) * rad, y, m.z + Math.sin(a) * rad);
-      c.copy(STONE_LOW).lerp(STONE_HIGH, t * 0.75 + r() * 0.25);
+      const ca = Math.cos(a);
+      const sa = Math.sin(a);
+      // broad bulges, vertical buttresses and narrow cracks (stretched vertically)
+      const bulge = noise(ca * 1.5 + m.seed * 3.1, sa * 1.5 + t * 0.5);
+      const pillar = noise(ca * 4.2 + phase, sa * 4.2 + t * 0.7);
+      const crack = noise(ca * 11 + phase * 2, sa * 11 + t * 1.6);
+      const relief = 0.18 * bulge + 0.09 * Math.sign(pillar) * Math.pow(Math.abs(pillar), 0.6) + 0.035 * crack;
+      // each band leans back a little as it rises, so the band above overhangs it
+      const step = k > 0 && k < levels ? -0.06 * local : 0;
+      const rad = m.r * taper * (1 + relief + step);
+      const y = m.base + t * H + (k > 0 && k < levels ? (r() - 0.5) * (H / levels) * 0.25 : 0);
+      pos.push(m.x + ca * rad, y, m.z + sa * rad);
+      // tone: lighter higher up, alternating warm/cool strata, darker in recesses and under overhangs
+      const band = Math.floor(t * bands);
+      c.copy(STONE_LOW).lerp(STONE_HIGH, t * 0.7 + r() * 0.12);
+      if (band % 2) c.lerp(STONE_WARM, 0.22);
+      const ao = 0.7 + 0.3 * Math.min(1, Math.max(0, (relief + 0.12) / 0.3));
+      const under = local < 0.18 && k > 0 ? 0.86 : 1;
+      c.multiplyScalar(ao * under * (0.86 + 0.14 * t));
+      // moss on the ledge tops
+      if (local > 0.82 && k < levels) c.lerp(MOSS, 0.35 * (0.5 + 0.5 * bulge));
       col.push(c.r, c.g, c.b);
     }
   }

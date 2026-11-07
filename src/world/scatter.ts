@@ -1,5 +1,6 @@
 import { rng } from "../utils/random";
 import { LANDMARKS, PLAY_CENTER, PLAY_RADIUS, WORLD_SIZE } from "./config";
+import { GROVES } from "./layout";
 import { createNoise, fbm } from "./noise";
 import type { TerrainData } from "./terrain";
 
@@ -43,6 +44,19 @@ function spaced(list: { x: number; z: number }[], x: number, z: number, min: num
 export function scatterTrees(t: TerrainData, count: number): Placement[] {
   const r = rng(404);
   const out: Placement[] = [];
+  // small groves first (a mix of round, tall and autumn trees), so the scattered trees space around them
+  const g = rng(707);
+  for (const grove of GROVES) {
+    const n = 4 + Math.floor(g() * 2);
+    for (let i = 0; i < n; i++) {
+      const ang = (i / n) * Math.PI * 2 + g() * 0.8;
+      const d = i === 0 ? 0 : 4.2 + g() * 1.8;
+      const x = grove.x + Math.cos(ang) * d;
+      const z = grove.z + Math.sin(ang) * d;
+      const variant = [TREE_KINDS.round, TREE_KINDS.tall, TREE_KINDS.autumn, TREE_KINDS.round, TREE_KINDS.tall][i % 5];
+      out.push({ x, y: gridSample(t, x, z).h - 0.2, z, s: (i === 0 ? 1.25 : 0.9) + g() * 0.35, ry: g() * Math.PI * 2, variant });
+    }
+  }
   for (let a = 0; a < count * 30 && out.length < count; a++) {
     const ang = r() * Math.PI * 2;
     const dist = Math.sqrt(r()) * (PLAY_RADIUS + 40);

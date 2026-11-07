@@ -2,10 +2,10 @@ import { useFrame, type ThreeElements } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
 import { BRIDGE } from "../../config";
-import { HOUSES, LANTERNS, RUINS, SIGNPOST, WINDMILL } from "../../layout";
+import { HOUSES, LANTERNS, SIGNPOST, WINDMILL } from "../../layout";
 import { bridgeDeck, terrainHeight } from "../../terrain";
 import { Ivy } from "./Ivy";
-import { Column, Lantern, MAT, archGeometry, gableFill } from "./parts";
+import { Lantern, MAT, archGeometry, gableFill } from "./parts";
 
 const ground = (x: number, z: number) => terrainHeight(x, z);
 
@@ -185,27 +185,6 @@ function Signpost() {
   );
 }
 
-function Ruin({ x, z, yaw, kind }: (typeof RUINS)[number]) {
-  const arch = useMemo(() => archGeometry(6.4, 6.2, 1.2, 4), []);
-  const y = ground(x, z) - 0.3;
-  if (kind === "arch") {
-    return <mesh geometry={arch} material={MAT.stone} position={[x, y, z]} rotation={[0.04, yaw, 0.03]} castShadow receiveShadow />;
-  }
-  return (
-    <group position={[x, y, z]} rotation={[0, yaw, 0]}>
-      <Column position={[-4, 0, 0]} height={5.4} radius={0.48} />
-      <Column position={[0, 0, 0]} height={2.4} radius={0.48} broken />
-      <Column position={[4, 0, 0]} height={5.4} radius={0.48} />
-      <mesh material={MAT.stone} position={[-2, 5.6, 0]} rotation={[0, 0, -0.08]} castShadow>
-        <boxGeometry args={[5.4, 0.7, 1.1]} />
-      </mesh>
-      <mesh material={MAT.stoneDark} position={[2.4, 0.3, 1.6]} rotation={[0.3, 0.5, 1.2]} castShadow>
-        <boxGeometry args={[2.6, 0.8, 0.9]} />
-      </mesh>
-    </group>
-  );
-}
-
 /** Arched stone bridge whose deck follows the same curve the explorer walks on. */
 function Bridge() {
   const segs = 10;
@@ -246,9 +225,6 @@ export function Village() {
       ))}
       <Windmill />
       <Signpost />
-      {RUINS.map((r, i) => (
-        <Ruin key={i} {...r} />
-      ))}
       {LANTERNS.map((l, i) => (
         <Lantern key={i} position={[l.x, ground(l.x, l.z) - 0.1, l.z]} rotation={[0, l.yaw, 0]} />
       ))}

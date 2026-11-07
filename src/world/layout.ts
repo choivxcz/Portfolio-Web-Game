@@ -35,13 +35,13 @@ export const PROPS: { model: string; x: number; z: number; yaw: number; height: 
   { model: "fountain-round-detail", x: 60, z: -82, yaw: 0, height: 2.4, r: 0 },
 ];
 
-/** Ruins scattered along the way: arches and broken colonnades. */
-export const RUINS: { x: number; z: number; yaw: number; kind: "arch" | "colonnade" }[] = [
-  { x: -22, z: 24, yaw: 0.8, kind: "arch" },
-  { x: -96, z: -44, yaw: 1.4, kind: "colonnade" },
-  { x: 84, z: 28, yaw: -0.6, kind: "arch" },
-  { x: -104, z: -78, yaw: 0.4, kind: "arch" },
-  { x: 22, z: 6, yaw: -0.2, kind: "colonnade" },
+/** Small groves of trees in the open meadows (centres; see scatterTrees). */
+export const GROVES: { x: number; z: number }[] = [
+  { x: -22, z: 24 },
+  { x: -96, z: -44 },
+  { x: 84, z: 28 },
+  { x: -104, z: -78 },
+  { x: 22, z: 6 },
 ];
 
 /** Lanterns every ~16 m along the main paths. */
@@ -102,13 +102,5 @@ export function structureColliders(): Collider[] {
   for (const h of HOUSES) out.push({ x: h.x, z: h.z, r: Math.max(h.w, h.d) * 0.62 });
   out.push({ x: WINDMILL.x, z: WINDMILL.z, r: 2.8 });
   for (const p of PROPS) if (p.r > 0) out.push({ x: p.x, z: p.z, r: p.r });
-  for (const r of RUINS) {
-    if (r.kind === "arch") {
-      add([r.x, r.z], r.yaw, -2.6, 0, 0.9);
-      add([r.x, r.z], r.yaw, 2.6, 0, 0.9);
-    } else {
-      for (const lx of [-4, 0, 4]) add([r.x, r.z], r.yaw, lx, 0, 0.7);
-    }
-  }
   return out;
 }
