@@ -1,0 +1,183 @@
+/* ════════════════════════════════════════════════════════════
+   JOURNEY — adventure log with landscape chapter banners
+   ════════════════════════════════════════════════════════════ */
+.journey {
+  --accent: var(--cryo);
+  background:
+    linear-gradient(180deg, var(--ivory-200), #ece4d7),
+    var(--ivory-200);
+}
+.log {
+  max-width: 920px;
+  margin: 0 auto;
+}
+.log-chapter + .log-chapter {
+  margin-top: 46px;
+}
+
+/* Chapter banner: a framed landscape fragment */
+.log-banner {
+  position: relative;
+  height: 150px;
+  margin-bottom: 26px;
+  overflow: hidden;
+  border: 5px solid #fbf8f2;
+  border-radius: 6px;
+  outline: 1px solid var(--gold);
+  box-shadow: 0 14px 30px -20px rgba(60, 50, 40, 0.7);
+}
+.log-banner .region-art {
+  width: 100%;
+  height: 100%;
+}
+.log-banner-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0 28px;
+  background: linear-gradient(90deg, rgba(20, 34, 70, 0.62), rgba(20, 34, 70, 0.15) 55%, transparent);
+  color: #fffaf0;
+}
+.log-year {
+  font-family: var(--font-display);
+  font-size: 2.6rem;
+  line-height: 1;
+  text-shadow: 0 2px 10px rgba(10, 20, 50, 0.5);
+}
+.log-chapter-title {
+  padding-left: 18px;
+  border-left: 1px solid rgba(236, 220, 184, 0.7);
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  letter-spacing: 0.04em;
+  color: var(--gold-light);
+}
+
+/* Entries along a gold route line */
+.log-entries {
+  position: relative;
+  display: grid;
+  gap: 14px;
+  padding-left: 46px;
+}
+.log-entries::before {
+  content: "";
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 17px;
+  width: 2px;
+  background: linear-gradient(180deg, var(--gold), rgba(211, 188, 142, 0.35));
+}
+.log-entry {
+  position: relative;
+}
+.log-marker {
+  position: absolute;
+  top: 18px;
+  left: -43px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid var(--gold-deep);
+  border-radius: 4px;
+  background: var(--ivory-100);
+  transform: rotate(45deg);
+  color: var(--accent);
+  box-shadow: 0 0 0 4px var(--ivory-200);
+}
+.log-marker svg {
+  transform: rotate(-45deg);
+}
+.log-entry.is-visible .log-marker,
+html:not(.motion) .log-marker {
+  background: #fff6e2;
+  box-shadow:
+    0 0 0 4px var(--ivory-200),
+    0 0 16px 2px rgba(236, 179, 73, 0.45);
+}
+.log-card {
+  padding: 16px 20px;
+  border: 1px solid var(--ivory-500);
+  border-radius: 3px;
+  background: var(--ivory-100);
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
+}
+.log-card:hover {
+  border-color: var(--gold);
+  box-shadow: 0 8px 22px -14px rgba(132, 96, 61, 0.55);
+}
+.log-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 4px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-tan);
+}
+.log-act {
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--ivory-400);
+  border: 1px solid var(--ivory-600);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-brown);
+}
+.log-title {
+  margin-bottom: 6px;
+  font-size: 1.28rem;
+  color: var(--text-title);
+}
+.log-text {
+  margin-bottom: 10px;
+  font-size: 0.93rem;
+  color: var(--text-tan);
+}
+.log-continues {
+  margin: 26px 0 0 46px;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--text-brown);
+}
+.log-continues span {
+  margin-right: 8px;
+  color: var(--amber-bar);
+}
+
+@media (max-width: 720px) {
+  .log-banner {
+    height: 120px;
+  }
+  .log-banner-text {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 4px;
+  }
+  .log-year {
+    font-size: 2rem;
+  }
+  .log-chapter-title {
+    padding-left: 0;
+    border-left: 0;
+    font-size: 1.05rem;
+  }
+  .log-entries {
+    padding-left: 40px;
+  }
+  .log-entries::before {
+    left: 14px;
+  }
+  .log-marker {
+    left: -39px;
+    width: 28px;
+    height: 28px;
+  }
+}

@@ -1,0 +1,478 @@
+import { useFrame } from "@react-three/fiber";
+import { useEffect, useMemo, useRef, type ReactNode } from "react";
+import { flushSync } from "react-dom";
+import { createRoot } from "react-dom/client";
+import * as THREE from "three";
+import { RegionArt } from "../../../components/scene/RegionArt";
+import { places, type PlaceId } from "../../../data/places";
+import { projects, type Project } from "../../../data/projects";
+import { LANDMARKS, type LandmarkId } from "../../config";
+import { facing } from "../../layout";
+import { terrainHeight } from "../../terrain";
+import { Column, Lantern, MAT, archGeometry, columnGeometry, gableFill, gableGeometry, starGeometry } from "./parts";
+
+const at = (id: LandmarkId) => {
+  const L = LANDMARKS.find((l) => l.id === id)!;
+  return { position: [L.pos[0], terrainHeight(L.pos[0], L.pos[1]), L.pos[1]] as [number, number, number], rotation: [0, facing(id), 0] as [number, number, number] };
+};
+
+function Spin({ speed = 0.5, bob = 0, children, ...props }: { speed?: number; bob?: number; children: ReactNode } & { position?: [number, number, number] }) {
+  const ref = useRef<THREE.Group>(null);
+  const baseY = props.position?.[1] ?? 0;
+  useFrame(({ clock }) => {
+    if (!ref.current) return;
+    ref.current.rotation.y = clock.elapsedTime * speed;
+    if (bob) ref.current.position.y = baseY + Math.sin(clock.elapsedTime * 1.4) * bob;
+  });
+  return (
+    <group ref={ref} {...props} userData={{ dynamic: true }}>
+      {children}
+    </group>
+  );
+}
+
+/* ── About: the Adventurer's Journal shrine ── */
+function JournalShrine() {
+  const steps = useMemo(
+    () => new THREE.LatheGeometry([[0, 0], [7.2, 0], [7.2, 0.45], [5.9, 0.45], [5.9, 0.9], [4.6, 0.9], [4.6, 1.3], [0, 1.3]].map(([x, y]) => new THREE.Vector2(x, y)), 24),
+    [],
+  );
+  const stele = useMemo(() => {
+    const s = new THREE.Shape();
+    s.moveTo(-1.3, 0);
+    s.lineTo(1.3, 0);
+    s.lineTo(1.3, 2.9);
+    s.absarc(0, 2.9, 1.3, 0, Math.PI, false);
+    s.lineTo(-1.3, 0);
+    return new THREE.ExtrudeGeometry(s, { depth: 0.55, bevelEnabled: true, bevelSize: 0.08, bevelThickness: 0.08, bevelSegments: 2 });
+  }, []);
+  const star = useMemo(() => starGeometry(0.55, 0.18, 0.12), []);
+  return (
+    <group {...at("about")}>
+      <mesh material={MAT.stoneDark} position={[0, -2.6, 0]}>
+        <cylinderGeometry args={[7.3, 7.6, 5.2, 24]} />
+      </mesh>
+      <mesh geometry={steps} material={MAT.stone} receiveShadow castShadow />
+      {Array.from({ length: 6 }, (_, i) => {
+        const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
+        const broken = i === 1 || i === 4;
+        return <Column key={i} position={[Math.cos(a) * 5.4, 0.9, Math.sin(a) * 5.4]} height={broken ? 2.2 : 4.6} radius={0.42} broken={broken} />;
+      })}
+      {/* stele with gold emblem */}
+      <mesh geometry={stele} material={MAT.stoneWarm} position={[0, 1.3, -2.9]} castShadow />
+      <mesh geometry={star} material={MAT.gold} position={[0, 4.2, -2.25]} />
+      {/* lectern and open journal */}
+      <mesh material={MAT.stoneDark} position={[0, 1.95, 0]} castShadow>
+        <cylinderGeometry args={[0.35, 0.55, 1.3, 8]} />
+      </mesh>
+      <mesh material={MAT.stoneWarm} position={[0, 2.68, 0]} rotation={[-0.35, 0, 0]}>
+        <boxGeometry args={[1.5, 0.12, 1.0]} />
+      </mesh>
+      <group position={[0, 2.8, 0.02]} rotation={[-0.35, 0, 0]}>
+        <mesh material={MAT.paper} position={[-0.34, 0, 0]} rotation={[0, 0, 0.12]}>
+          <boxGeometry args={[0.66, 0.05, 0.86]} />
+        </mesh>
+        <mesh material={MAT.paper} position={[0.34, 0, 0]} rotation={[0, 0, -0.12]}>
+          <boxGeometry args={[0.66, 0.05, 0.86]} />
+        </mesh>
+        <mesh material={MAT.cloth} position={[0, -0.05, 0]}>
+          <boxGeometry args={[1.42, 0.05, 0.92]} />
+        </mesh>
+      </group>
+      <Spin position={[0, 3.6, 0]} speed={0.8} bob={0.12}>
+        <mesh material={MAT.glow} scale={[0.22, 0.32, 0.22]}>
+          <octahedronGeometry args={[1, 0]} />
+        </mesh>
+      </Spin>
+      <Lantern position={[-3.4, 1.3, 3.2]} rotation={[0, Math.PI, 0]} />
+      <Lantern position={[3.4, 1.3, 3.2]} />
+    </group>
+  );
+}
+
+/* ── Skills: the Academy ── */
+function Academy() {
+  const roof = useMemo(() => gableGeometry(16, 4.2, 12, 0.7), []);
+  const roofFill = useMemo(() => gableFill(16, 4.2, 11.6), []);
+  const pediment = useMemo(() => gableFill(15, 2.6, 0.8), []);
+  const col = useMemo(() => columnGeometry(7.2, 0.42), []);
+  return (
+    <group {...at("skills")}>
+      <mesh material={MAT.stoneDark} position={[0, -2.6, 1]}>
+        <boxGeometry args={[17.4, 6.4, 17]} />
+      </mesh>
+      {[0, 1, 2].map((i) => (
+        <mesh key={i} material={MAT.stoneWarm} position={[0, 0.2 + i * 0.4, 8.6 - i * 0.7]} receiveShadow castShadow>
+          <boxGeometry args={[16, 0.4, 1.6 + i * 0.1]} />
+        </mesh>
+      ))}
+      <mesh material={MAT.stone} position={[0, 0.6, 0.5]} receiveShadow>
+        <boxGeometry args={[17, 1.2, 15]} />
+      </mesh>
+      <mesh material={MAT.plaster} position={[0, 5.2, -1]} castShadow receiveShadow>
+        <boxGeometry args={[16, 8, 12]} />
+      </mesh>
+      <mesh geometry={roofFill} material={MAT.plaster} position={[0, 9.2, -1]} />
+      <mesh geometry={roof} material={MAT.roofBlue} position={[0, 9.2, -1]} castShadow />
+      {/* portico */}
+      {[-6, -3.6, -1.2, 1.2, 3.6, 6].map((x) => (
+        <mesh key={x} geometry={col} material={MAT.stone} position={[x, 1.2, 6.6]} castShadow />
+      ))}
+      <mesh material={MAT.stone} position={[0, 8.7, 6.4]} castShadow>
+        <boxGeometry args={[15.4, 0.9, 1.6]} />
+      </mesh>
+      <mesh geometry={pediment} material={MAT.stone} position={[0, 9.15, 6.4]} />
+      <mesh material={MAT.gold} position={[0, 10.1, 6.85]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.8, 0.8, 0.12, 20]} />
+      </mesh>
+      {/* windows */}
+      {[-5, -1.7, 1.7, 5].map((x) => (
+        <mesh key={x} material={MAT.glow} position={[x, 4.6, 5.02]}>
+          <boxGeometry args={[1.2, 2.4, 0.08]} />
+        </mesh>
+      ))}
+      <mesh material={MAT.woodDark} position={[0, 2.9, 5.03]}>
+        <boxGeometry args={[2.2, 3.4, 0.1]} />
+      </mesh>
+      {/* central tower with dome */}
+      <mesh material={MAT.plaster} position={[0, 10, -3]} castShadow>
+        <cylinderGeometry args={[3, 3.3, 10, 16]} />
+      </mesh>
+      {Array.from({ length: 8 }, (_, i) => {
+        const a = (i / 8) * Math.PI * 2;
+        return (
+          <mesh key={i} material={MAT.glow} position={[Math.sin(a) * 3.05, 12.4, -3 + Math.cos(a) * 3.05]} rotation={[0, a, 0]}>
+            <boxGeometry args={[0.7, 1.6, 0.1]} />
+          </mesh>
+        );
+      })}
+      <mesh material={MAT.stone} position={[0, 15.2, -3]}>
+        <cylinderGeometry args={[3.5, 3.5, 0.5, 16]} />
+      </mesh>
+      <mesh material={MAT.roofBlue} position={[0, 15.4, -3]} castShadow>
+        <sphereGeometry args={[3.1, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
+      </mesh>
+      <mesh material={MAT.gold} position={[0, 19.2, -3]}>
+        <coneGeometry args={[0.35, 1.8, 8]} />
+      </mesh>
+      {/* corner turrets */}
+      {[-8.4, 8.4].map((x) => (
+        <group key={x} position={[x, 0, -6.6]}>
+          <mesh material={MAT.stone} position={[0, 6, 0]} castShadow>
+            <cylinderGeometry args={[1.5, 1.7, 12, 12]} />
+          </mesh>
+          <mesh material={MAT.roofBlue} position={[0, 13.4, 0]} castShadow>
+            <coneGeometry args={[2, 3, 12]} />
+          </mesh>
+        </group>
+      ))}
+      {/* banners */}
+      {[-4.8, 4.8].map((x) => (
+        <mesh key={x} material={MAT.cloth} position={[x, 6, 7.1]}>
+          <boxGeometry args={[1.1, 3.6, 0.05]} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+/* ── Projects: the Expedition Board ──
+   Each project is a postcard from the region it is charted in (src/data/places.ts):
+   the region's landscape, its name on a coloured band, then the project title. */
+const NOTE_W = 256;
+const NOTE_H = 320;
+const NOTE_RES = 2;
+
+/** Breaks text into lines no wider than maxW at the context's current font. */
+function wrapText(ctx: CanvasRenderingContext2D, text: string, maxW: number) {
+  const lines: string[] = [];
+  let line = "";
+  for (const word of text.split(" ")) {
+    const next = line ? `${line} ${word}` : word;
+    if (line && ctx.measureText(next).width > maxW) {
+      lines.push(line);
+      line = word;
+    } else line = next;
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+function drawNote(canvas: HTMLCanvasElement, p: Project, art?: CanvasImageSource) {
+  const place = places[p.region];
+  const ctx = canvas.getContext("2d")!;
+  ctx.setTransform(NOTE_RES, 0, 0, NOTE_RES, 0, 0);
+  ctx.fillStyle = "#f4ecd9";
+  ctx.fillRect(0, 0, NOTE_W, NOTE_H);
+
+  // Landscape window (16:9), then the region band under it.
+  const px = 14;
+  const py = 14;
+  const pw = 228;
+  const ph = 128;
+  if (art) ctx.drawImage(art, px, py, pw, ph);
+  else {
+    ctx.fillStyle = place.accent;
+    ctx.fillRect(px, py, pw, ph);
+  }
+  ctx.fillStyle = place.accent;
+  ctx.fillRect(px, py + ph, pw, 26);
+  ctx.strokeStyle = "#e3d5b8";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(px, py, pw, ph + 26);
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#26304a";
+  ctx.font = "15px Marcellus, Georgia, serif";
+  if ("letterSpacing" in ctx) ctx.letterSpacing = "3px";
+  ctx.fillText(place.name.toUpperCase(), NOTE_W / 2, py + ph + 14);
+  if ("letterSpacing" in ctx) ctx.letterSpacing = "0px";
+
+  // Project title, shrunk until it fits the space left.
+  let size = 26;
+  let lines: string[] = [];
+  for (; size >= 15; size -= 2) {
+    ctx.font = `${size}px Marcellus, Georgia, serif`;
+    lines = wrapText(ctx, p.name, 216);
+    if (lines.length * size * 1.18 <= 104) break;
+  }
+  const lh = size * 1.18;
+  ctx.fillStyle = "#3b4255";
+  lines.forEach((l, i) => ctx.fillText(l, NOTE_W / 2, 226 - ((lines.length - 1) * lh) / 2 + i * lh));
+
+  ctx.fillStyle = "#8a6a42";
+  ctx.font = "italic 13px Georgia, serif";
+  ctx.fillText(`✦ ${place.epithet} ✦`, NOTE_W / 2, 296);
+  ctx.strokeStyle = "#c9b48c";
+  ctx.lineWidth = 4;
+  ctx.strokeRect(5, 5, NOTE_W - 10, NOTE_H - 10);
+}
+
+/** Renders a region banner (the same SVG as the Projects panel) to an image. */
+async function regionImage(region: PlaceId, id: string) {
+  const host = document.createElement("div");
+  const root = createRoot(host);
+  flushSync(() => root.render(<RegionArt preset={region} id={id} />));
+  const svg = host.querySelector("svg");
+  svg?.setAttribute("width", "800");
+  svg?.setAttribute("height", "450");
+  const markup = svg ? new XMLSerializer().serializeToString(svg) : "";
+  root.unmount();
+  if (!markup) return undefined;
+  const url = URL.createObjectURL(new Blob([markup], { type: "image/svg+xml" }));
+  try {
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    // Never hand WebGL a canvas the browser considers tainted.
+    const probe = document.createElement("canvas").getContext("2d")!;
+    probe.drawImage(img, 0, 0, 1, 1);
+    probe.getImageData(0, 0, 1, 1);
+    return img;
+  } catch {
+    return undefined;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+function ExpeditionBoard() {
+  const notes = useMemo(
+    () =>
+      projects.slice(0, 8).map((p, i) => {
+        const canvas = document.createElement("canvas");
+        canvas.width = NOTE_W * NOTE_RES;
+        canvas.height = NOTE_H * NOTE_RES;
+        drawNote(canvas, p);
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = 4;
+        return { p, canvas, tex, x: -1.75 + (i % 4) * 1.17, y: 2.75 - Math.floor(i / 4) * 1.25, r: ((i * 37) % 9) / 60 - 0.07 };
+      }),
+    [],
+  );
+
+  // Paint each region's landscape onto its note once the world is up.
+  useEffect(() => {
+    let alive = true;
+    const timer = window.setTimeout(async () => {
+      await document.fonts?.load("26px Marcellus").catch(() => undefined);
+      for (const n of notes) {
+        const art = await regionImage(n.p.region, `note-${n.p.id}`);
+        if (!alive) return;
+        drawNote(n.canvas, n.p, art);
+        n.tex.needsUpdate = true;
+      }
+    }, 400);
+    return () => {
+      alive = false;
+      window.clearTimeout(timer);
+    };
+  }, [notes]);
+
+  return (
+    <group {...at("projects")}>
+      {[-2.5, 2.5].map((x) => (
+        <mesh key={x} material={MAT.woodDark} position={[x, 2, 0]} castShadow>
+          <boxGeometry args={[0.32, 4, 0.32]} />
+        </mesh>
+      ))}
+      <mesh material={MAT.wood} position={[0, 2.2, 0]} castShadow receiveShadow>
+        <boxGeometry args={[5, 2.9, 0.22]} />
+      </mesh>
+      <mesh material={MAT.woodDark} position={[0, 3.72, 0.05]}>
+        <boxGeometry args={[5.3, 0.16, 0.32]} />
+      </mesh>
+      <mesh material={MAT.woodDark} position={[0, 0.68, 0.05]}>
+        <boxGeometry args={[5.3, 0.16, 0.32]} />
+      </mesh>
+      <mesh material={MAT.roofRed} position={[0, 4.35, 0.15]} rotation={[0.5, 0, 0]} castShadow>
+        <boxGeometry args={[6, 0.14, 1.4]} />
+      </mesh>
+      <mesh material={MAT.roofRed} position={[0, 4.35, -0.45]} rotation={[-0.5, 0, 0]} castShadow>
+        <boxGeometry args={[6, 0.14, 1.2]} />
+      </mesh>
+      {notes.map((n) => (
+        <group key={n.p.id} position={[n.x, n.y, 0.125]} rotation={[0, 0, n.r]}>
+          <mesh>
+            <planeGeometry args={[0.95, 1.19]} />
+            <meshBasicMaterial map={n.tex} toneMapped={false} />
+          </mesh>
+          <mesh material={MAT.gold} position={[0, 0.5, 0.03]}>
+            <sphereGeometry args={[0.045, 8, 6]} />
+          </mesh>
+        </group>
+      ))}
+      <Lantern position={[3.2, 0, 0.6]} />
+      {/* crates and a barrel */}
+      <mesh material={MAT.wood} position={[-3.6, 0.45, 1.2]} rotation={[0, 0.4, 0]} castShadow>
+        <boxGeometry args={[0.9, 0.9, 0.9]} />
+      </mesh>
+      <mesh material={MAT.wood} position={[-3.3, 1.2, 1.1]} rotation={[0, 0.9, 0]} castShadow>
+        <boxGeometry args={[0.6, 0.6, 0.6]} />
+      </mesh>
+      <mesh material={MAT.woodDark} position={[-4.6, 0.55, 0.2]} castShadow>
+        <cylinderGeometry args={[0.45, 0.4, 1.1, 10]} />
+      </mesh>
+    </group>
+  );
+}
+
+/* ── Achievements: the Hall ── */
+function HallOfAchievements() {
+  const arch = useMemo(() => archGeometry(5.6, 6.4, 1.1, 3.2), []);
+  const star = useMemo(() => starGeometry(1.0, 0.36, 0.2), []);
+  return (
+    <group {...at("achievements")}>
+      <mesh material={MAT.stoneDark} position={[0, -2.4, 0]}>
+        <boxGeometry args={[17.4, 5.4, 17.4]} />
+      </mesh>
+      {[0, 1].map((i) => (
+        <mesh key={i} material={MAT.stoneWarm} position={[0, 0.3 + i * 0.5, 0]} receiveShadow castShadow>
+          <boxGeometry args={[17 - i * 2, 0.6 + i * 0.4, 17 - i * 2]} />
+        </mesh>
+      ))}
+      {Array.from({ length: 8 }, (_, i) => {
+        const a = (i / 8) * Math.PI * 2;
+        const broken = i === 3 || i === 6;
+        return <Column key={i} position={[Math.cos(a) * 6.8, 1.3, Math.sin(a) * 6.8]} height={broken ? 2.8 : 6.2} radius={0.5} broken={broken} />;
+      })}
+      <mesh geometry={arch} material={MAT.stone} position={[0, 1.3, 8]} castShadow />
+      <mesh material={MAT.gold} position={[0, 7.4, 8.6]} rotation={[0, 0, Math.PI / 4]}>
+        <boxGeometry args={[0.6, 0.6, 0.2]} />
+      </mesh>
+      {/* back walls, partly fallen */}
+      {[-4.5, -1.5, 1.5, 4.5].map((x, i) => (
+        <mesh key={x} material={MAT.stoneDark} position={[x, 1.3 + (i % 2 ? 1.4 : 2.2), -7.4]} castShadow>
+          <boxGeometry args={[2.9, i % 2 ? 2.8 : 4.4, 0.9]} />
+        </mesh>
+      ))}
+      {/* pedestal and floating medal */}
+      <mesh material={MAT.stone} position={[0, 2.1, 0]} castShadow>
+        <cylinderGeometry args={[1.4, 1.8, 1.6, 8]} />
+      </mesh>
+      <Spin position={[0, 4.6, 0]} speed={0.35} bob={0.15}>
+        <mesh material={MAT.gold}>
+          <torusGeometry args={[1.25, 0.16, 10, 32]} />
+        </mesh>
+        <mesh material={MAT.rose} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[1.1, 1.1, 0.16, 32]} />
+        </mesh>
+        <mesh geometry={star} material={MAT.gold} />
+      </Spin>
+    </group>
+  );
+}
+
+/* ── Contact: the Communication Beacon ── */
+function Beacon({ light }: { light: boolean }) {
+  const crystal = useRef<THREE.Mesh>(null);
+  useFrame(({ clock }) => {
+    if (crystal.current) {
+      crystal.current.rotation.y = clock.elapsedTime * 0.8;
+      crystal.current.position.y = 21.6 + Math.sin(clock.elapsedTime * 1.6) * 0.25;
+    }
+  });
+  return (
+    <group {...at("contact")}>
+      <mesh material={MAT.stoneDark} position={[0, -2.4, 0]}>
+        <cylinderGeometry args={[4.9, 5.4, 5, 8]} />
+      </mesh>
+      <mesh material={MAT.stoneWarm} position={[0, 0.6, 0]} receiveShadow castShadow>
+        <cylinderGeometry args={[4.6, 5, 1.2, 8]} />
+      </mesh>
+      <mesh material={MAT.stone} position={[0, 10.2, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[2.5, 3.2, 18, 8]} />
+      </mesh>
+      {[4.5, 9, 13.5, 18].map((y) => (
+        <mesh key={y} material={MAT.stoneDark} position={[0, y, 0]}>
+          <cylinderGeometry args={[3.25 - y * 0.035, 3.3 - y * 0.035, 0.35, 8]} />
+        </mesh>
+      ))}
+      {[6, 12].map((y) =>
+        [0, 2, 4, 6].map((k) => {
+          const a = (k / 8) * Math.PI * 2 + Math.PI / 8;
+          return (
+            <mesh key={`${y}-${k}`} material={MAT.glow} position={[Math.sin(a) * (3.1 - y * 0.035), y, Math.cos(a) * (3.1 - y * 0.035)]} rotation={[0, a, 0]}>
+              <boxGeometry args={[0.6, 1.3, 0.1]} />
+            </mesh>
+          );
+        }),
+      )}
+      <mesh material={MAT.stone} position={[0, 19.4, 0]} castShadow>
+        <cylinderGeometry args={[3.6, 3.6, 0.6, 8]} />
+      </mesh>
+      {Array.from({ length: 4 }, (_, i) => {
+        const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+        return (
+          <mesh key={i} material={MAT.stone} position={[Math.sin(a) * 2.3, 21.4, Math.cos(a) * 2.3]} castShadow>
+            <boxGeometry args={[0.45, 3.6, 0.45]} />
+          </mesh>
+        );
+      })}
+      <mesh material={MAT.roofBlue} position={[0, 24.6, 0]} castShadow>
+        <coneGeometry args={[3.4, 3.4, 8]} />
+      </mesh>
+      <mesh material={MAT.gold} position={[0, 27, 0]}>
+        <coneGeometry args={[0.3, 1.4, 8]} />
+      </mesh>
+      <mesh ref={crystal} userData={{ dynamic: true }} material={MAT.crystal} position={[0, 21.6, 0]} scale={[0.75, 1.15, 0.75]}>
+        <octahedronGeometry args={[1, 0]} />
+      </mesh>
+      {light && <pointLight position={[0, 21.6, 0]} color="#8eeaff" intensity={60} distance={45} decay={1.6} />}
+    </group>
+  );
+}
+
+export function Landmarks({ lights }: { lights: boolean }) {
+  return (
+    <>
+      <JournalShrine />
+      <Academy />
+      <ExpeditionBoard />
+      <HallOfAchievements />
+      <Beacon light={lights} />
+    </>
+  );
+}

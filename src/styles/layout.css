@@ -1,0 +1,105 @@
+/* ────────────────────────────────────────────────────────────
+   Section themes
+   ──────────────────────────────────────────────────────────── */
+.section {
+  position: relative;
+  padding-block: clamp(76px, 10vw, 120px);
+  overflow: hidden;
+}
+
+/* Ivory parchment with a faint paper grain */
+.section--ivory {
+  color: var(--text-body);
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .52  0 0 0 0 .42  0 0 0 0 .3  0 0 0 .06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"),
+    radial-gradient(80% 50% at 50% 0%, #faf7f2, transparent 70%),
+    var(--ivory-200);
+}
+
+/* Deep archive blue with a soft nebula and stars (used selectively) */
+.section--archive {
+  color: var(--text-on-navy);
+  background:
+    radial-gradient(1px 1px at 14% 20%, rgba(255, 255, 255, 0.75), transparent 60%),
+    radial-gradient(1px 1px at 68% 14%, rgba(255, 255, 255, 0.6), transparent 60%),
+    radial-gradient(1.5px 1.5px at 42% 66%, rgba(255, 255, 255, 0.5), transparent 60%),
+    radial-gradient(1px 1px at 86% 56%, rgba(255, 255, 255, 0.65), transparent 60%),
+    radial-gradient(1px 1px at 28% 84%, rgba(255, 255, 255, 0.5), transparent 60%),
+    radial-gradient(55% 40% at 30% 30%, rgba(60, 92, 160, 0.35), transparent 70%),
+    radial-gradient(50% 45% at 80% 70%, rgba(48, 70, 140, 0.35), transparent 70%),
+    linear-gradient(180deg, #0c1a3c, var(--navy-abyss));
+  background-size:
+    300px 300px,
+    260px 260px,
+    340px 340px,
+    280px 280px,
+    320px 320px,
+    auto,
+    auto,
+    auto;
+}
+
+/* ── Section headings (brown title over a fine rule, like the handbook) ── */
+.section-header {
+  max-width: 760px;
+  margin: 0 auto clamp(40px, 6vw, 58px);
+  text-align: center;
+}
+.section-chapter {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-tan);
+}
+.section-chapter svg {
+  color: var(--accent);
+}
+.section-title {
+  font-size: clamp(2.2rem, 4.8vw, 3.4rem);
+  letter-spacing: 0.02em;
+  color: var(--text-brown);
+}
+.divider {
+  width: 260px;
+  max-width: 80%;
+  height: 16px;
+  margin: 14px auto 0;
+  color: var(--gold-deep);
+}
+.section-lede {
+  margin: 16px auto 0;
+  max-width: 600px;
+  font-size: 1.05rem;
+  color: var(--text-tan);
+}
+.section--archive .section-chapter {
+  color: var(--gold);
+}
+.section--archive .section-title {
+  color: var(--text-on-navy);
+  text-shadow: 0 0 28px rgba(211, 188, 142, 0.25);
+}
+.section--archive .divider {
+  color: var(--gold);
+}
+.section--archive .section-lede {
+  color: var(--text-on-navy-2);
+}
+
+.diamond-rule {
+  width: 180px;
+  height: 10px;
+  color: var(--gold-deep);
+}
+
+@media (max-width: 720px) {
+  .section-chapter {
+    font-size: 0.64rem;
+    letter-spacing: 0.14em;
+  }
+}

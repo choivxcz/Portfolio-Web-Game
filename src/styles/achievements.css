@@ -1,0 +1,245 @@
+/* ════════════════════════════════════════════════════════════
+   ACHIEVEMENTS — category list + achievement book
+   (modelled on the game's Achievements screen)
+   ════════════════════════════════════════════════════════════ */
+.achievements {
+  --accent: var(--geo);
+}
+.ach-screen {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 18px;
+  max-width: 1120px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+/* Category list */
+.ach-categories {
+  display: grid;
+  gap: 8px;
+}
+.ach-completed {
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-size: 1.08rem;
+  color: var(--text-brown);
+}
+.ach-completed strong {
+  font-weight: 400;
+  color: var(--text-strong);
+}
+.ach-cat {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  padding: 14px 18px;
+  border: 0;
+  border-radius: 3px;
+  background: var(--navy-row);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  color: var(--ivory-300);
+  text-align: left;
+  transition: background-color 0.25s;
+}
+.ach-cat:hover {
+  background: #36435a;
+}
+.ach-cat-name {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  line-height: 1.25;
+}
+.ach-cat-pct {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-on-navy-2);
+}
+.ach-cat.is-active {
+  background:
+    repeating-linear-gradient(45deg, rgba(168, 138, 85, 0.07) 0 2px, transparent 2px 14px),
+    var(--ivory-400);
+  box-shadow: inset 0 0 0 1px var(--gold-light);
+  color: var(--text-body);
+}
+.ach-cat.is-active .ach-cat-pct {
+  color: var(--text-tan);
+}
+.ach-cat.is-active::before {
+  content: "";
+  position: absolute;
+  left: -14px;
+  top: 50%;
+  border-left: 8px solid var(--gold-deep);
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  transform: translateY(-50%);
+}
+.ach-cat:focus-visible {
+  outline: 2px solid var(--amber-bar);
+  outline-offset: 2px;
+}
+
+/* The book: navy binding, gold corners, ivory page */
+.ach-book {
+  position: relative;
+  padding: 12px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #33405a, var(--navy-row));
+  box-shadow: 0 26px 50px -28px rgba(30, 36, 50, 0.7);
+}
+.ach-book::before,
+.ach-book::after {
+  content: "";
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  background: linear-gradient(135deg, #e3c88e, #a8823c);
+  clip-path: polygon(0 0, 100% 0, 100% 24%, 24% 24%, 24% 100%, 0 100%);
+}
+.ach-book::before {
+  top: -2px;
+  left: -2px;
+}
+.ach-book::after {
+  right: -2px;
+  bottom: -2px;
+  transform: scale(-1);
+}
+.ach-page {
+  padding: 14px;
+  border-radius: 4px;
+  background: var(--ivory-200);
+}
+.ach-progress-row,
+.ach-row {
+  display: grid;
+  border: 1px solid var(--ivory-500);
+  background: var(--ivory-100);
+}
+.ach-progress-row {
+  grid-template-columns: 1fr 140px;
+  margin-bottom: 12px;
+}
+.ach-progress-text {
+  padding: 14px 18px;
+}
+.ach-progress-title {
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--text-brown);
+}
+.ach-bar {
+  height: 5px;
+  border-radius: 999px;
+  background: #d8cfc2;
+  overflow: hidden;
+}
+.ach-bar span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--amber);
+}
+.ach-progress-note {
+  margin: 6px 0 0;
+  font-size: 0.86rem;
+  color: var(--text-tan);
+}
+.ach-progress-pct {
+  display: grid;
+  place-items: center;
+  margin: 0;
+  background: var(--ivory-400);
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--text-brown);
+}
+.ach-list {
+  display: grid;
+  gap: 8px;
+}
+.ach-row {
+  grid-template-columns: 76px minmax(0, 1fr) 140px;
+  align-items: center;
+  min-height: 96px;
+  transition: box-shadow 0.25s;
+}
+.ach-row:hover {
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--gold-light);
+}
+.medal {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto;
+  filter: drop-shadow(0 2px 3px rgba(90, 60, 20, 0.35));
+}
+.ach-text {
+  padding: 12px 8px;
+}
+.ach-title {
+  margin-bottom: 2px;
+  font-size: 1.2rem;
+  color: var(--text-title);
+}
+.ach-text p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-tan);
+}
+.ach-status {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 2px;
+  align-self: stretch;
+  background: var(--ivory-400);
+  text-align: center;
+}
+.ach-done {
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  color: var(--text-brown);
+}
+.ach-status time {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-tan);
+}
+
+@media (max-width: 960px) {
+  .ach-screen {
+    grid-template-columns: 1fr;
+  }
+  .ach-categories {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .ach-completed {
+    grid-column: 1 / -1;
+  }
+  .ach-cat.is-active::before {
+    display: none;
+  }
+}
+@media (max-width: 640px) {
+  .ach-categories {
+    grid-template-columns: 1fr;
+  }
+  .ach-row {
+    grid-template-columns: 60px minmax(0, 1fr);
+  }
+  .medal {
+    width: 48px;
+    height: 48px;
+  }
+  .ach-status {
+    grid-column: 1 / -1;
+    grid-auto-flow: column;
+    gap: 12px;
+    padding: 6px;
+  }
+  .ach-progress-row {
+    grid-template-columns: 1fr 90px;
+  }
+}

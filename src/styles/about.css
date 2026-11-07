@@ -1,0 +1,359 @@
+/* ════════════════════════════════════════════════════════════
+   ABOUT — an open adventurer's handbook
+   ════════════════════════════════════════════════════════════ */
+.about {
+  --accent: var(--anemo);
+}
+.handbook {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+/* Bookmark tabs */
+.handbook-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 64px;
+  margin-right: -8px;
+}
+.handbook-tab {
+  display: block;
+  width: 138px;
+  padding: 13px 16px 13px 18px;
+  border-radius: 10px 0 0 10px;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: #fff;
+  text-decoration: none;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  transition:
+    transform 0.25s var(--ease),
+    filter 0.25s;
+}
+.handbook-tab:hover {
+  transform: translateX(-5px);
+  filter: brightness(1.08);
+}
+.tab--green {
+  background: linear-gradient(135deg, #6d9b4c, #4f7c39);
+}
+.tab--teal {
+  background: linear-gradient(135deg, #3c97a4, #23707d);
+}
+.tab--amber {
+  background: linear-gradient(135deg, #c3913f, #94692a);
+}
+.tab--rose {
+  background: linear-gradient(135deg, #ac5f4f, #7f3f35);
+}
+.tab--ivory {
+  border-left: 4px solid #8a6ad0;
+  background: var(--ivory-100);
+  color: var(--text-brown);
+  text-shadow: none;
+  transform: translateX(-6px);
+}
+
+/* The book */
+.handbook-book {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 14px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #30323d, var(--leather));
+  box-shadow:
+    inset 0 0 0 2px #3c3f4c,
+    0 30px 60px -30px rgba(30, 30, 40, 0.7);
+}
+.book-cap {
+  position: absolute;
+  z-index: 3;
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #b8956a, #6f5639);
+  clip-path: polygon(0 0, 100% 0, 100% 30%, 30% 30%, 30% 100%, 0 100%);
+}
+.book-cap::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  width: 9px;
+  height: 9px;
+  background: #e9d3a6;
+  transform: rotate(45deg);
+}
+.book-cap--tl {
+  top: -2px;
+  left: -2px;
+}
+.book-cap--tr {
+  top: -2px;
+  right: -2px;
+  transform: scaleX(-1);
+}
+.book-cap--bl {
+  bottom: -2px;
+  left: -2px;
+  transform: scaleY(-1);
+}
+.book-cap--br {
+  bottom: -2px;
+  right: -2px;
+  transform: scale(-1);
+}
+.handbook-page {
+  padding: 30px clamp(20px, 3vw, 36px) 28px;
+  color: var(--text-body);
+}
+.handbook-page--left {
+  border-radius: 8px 2px 2px 8px;
+  background: linear-gradient(90deg, #f4eee7 78%, #e4dace);
+}
+.handbook-page--right {
+  border-radius: 2px 8px 8px 2px;
+  background: linear-gradient(90deg, #e4dace, #f4eee7 22%);
+}
+.page-title {
+  margin-bottom: 18px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #d9ccb9;
+  font-size: 1.55rem;
+  text-align: center;
+  color: var(--text-brown);
+}
+
+/* Namecard + identity */
+.namecard {
+  position: relative;
+  margin-bottom: 44px;
+}
+.namecard-art {
+  aspect-ratio: 16 / 7;
+  overflow: hidden;
+  border: 5px solid #fbf8f2;
+  border-radius: 4px;
+  outline: 1px solid var(--ivory-600);
+  box-shadow: 0 10px 22px -14px rgba(60, 50, 40, 0.6);
+}
+.namecard-art .region-art {
+  width: 100%;
+  height: 100%;
+}
+.namecard-seal {
+  position: absolute;
+  left: 50%;
+  bottom: -34px;
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #4a5571, var(--text-strong));
+  box-shadow:
+    0 0 0 3px var(--gold),
+    0 0 0 6px var(--ivory-200);
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  color: var(--gold-light);
+}
+.profile-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  text-align: center;
+  color: var(--text-brown);
+}
+.profile-ribbon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 8px auto 18px;
+  padding: 4px 18px;
+  max-width: 300px;
+  background: linear-gradient(90deg, transparent, #c4ad8f 18%, #c4ad8f 82%, transparent);
+  color: #fffaf0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.attr-list {
+  margin: 0;
+  border: 1px solid var(--ivory-500);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.attr-list > div {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 12px;
+  padding: 9px 16px;
+  background: var(--ivory-100);
+}
+.attr-list > div:nth-child(even) {
+  background: var(--ivory-400);
+}
+.attr-list dt {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-tan);
+  padding-top: 2px;
+}
+.attr-list dd {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+.attr-tags dd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.attr-tags span {
+  padding: 0 8px;
+  border: 1px solid var(--ivory-600);
+  border-radius: 999px;
+  font-size: 0.76rem;
+}
+
+/* Journal rows, like quest entries in the handbook */
+.journal-list {
+  display: grid;
+  gap: 8px;
+}
+.journal-row {
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  gap: 12px;
+  padding: 13px 16px;
+  border: 1px solid var(--ivory-500);
+  border-radius: 3px;
+  background: var(--ivory-100);
+}
+.journal-row--current {
+  border-left: 4px solid var(--amber-bar);
+  background: linear-gradient(90deg, #fbe7cb, var(--ivory-100) 70%);
+}
+.row-icon {
+  margin-top: 2px;
+  color: var(--text-tan-soft);
+}
+.journal-row--current .row-icon {
+  color: var(--amber-bar);
+}
+.row-title {
+  margin: 0 0 2px;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--text-title);
+}
+.row-text {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-tan);
+}
+.row-text em {
+  font-style: normal;
+  font-weight: 700;
+  color: #5d7f1e;
+}
+.page-footnote {
+  margin: 16px 0 0;
+  font-size: 0.84rem;
+  text-align: right;
+  color: var(--text-tan);
+}
+.page-footnote a {
+  font-weight: 700;
+  color: var(--text-brown);
+}
+
+/* Attribute-style stat rows */
+.stat-rows {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  max-width: 1120px;
+  margin: 28px auto 0;
+}
+.stat-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--ivory-600);
+  border-radius: 4px;
+  background: var(--ivory-100);
+}
+.stat-row svg {
+  flex: none;
+  color: var(--accent);
+}
+.stat-label {
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text-body);
+}
+.stat-value {
+  margin-left: auto;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--text-brown);
+}
+
+@media (max-width: 1000px) {
+  .handbook {
+    grid-template-columns: 1fr;
+  }
+  .handbook-tabs {
+    flex-direction: row;
+    gap: 6px;
+    padding: 0 16px;
+    margin: 0 0 -8px;
+    overflow-x: auto;
+  }
+  .handbook-tab {
+    width: auto;
+    flex: none;
+    padding: 10px 16px 16px;
+    border-radius: 10px 10px 0 0;
+    font-size: 0.95rem;
+  }
+  .handbook-tab:hover,
+  .tab--ivory {
+    transform: translateY(-4px);
+  }
+  .tab--ivory {
+    border-left: 0;
+    border-top: 4px solid #8a6ad0;
+  }
+  .handbook-book {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .handbook-page--left,
+  .handbook-page--right {
+    border-radius: 8px;
+    background: #f4eee7;
+  }
+  .stat-rows {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 560px) {
+  .stat-rows {
+    grid-template-columns: 1fr;
+  }
+}

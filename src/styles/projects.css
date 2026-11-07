@@ -1,0 +1,282 @@
+/* ════════════════════════════════════════════════════════════
+   PROJECTS — exploration archive (modelled on the game's
+   Archive › Geography screen: label strip, ivory frame, caption)
+   ════════════════════════════════════════════════════════════ */
+.projects {
+  --accent: var(--dendro);
+}
+
+/* Toolbar: title, region filter, entry counter */
+.archive-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 22px;
+  margin-bottom: 28px;
+  padding: 0 0 18px;
+  border-bottom: 1px solid rgba(211, 188, 142, 0.28);
+}
+.archive-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  color: var(--ivory-300);
+}
+.archive-heading-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1.5px solid var(--gold);
+  color: var(--gold);
+}
+.archive-select select {
+  appearance: none;
+  min-width: 230px;
+  padding: 0.55em 2.8em 0.55em 1.3em;
+  border: 0;
+  border-radius: 999px;
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M0 0h12L6 8z' fill='%233b4255'/></svg>")
+      no-repeat right 18px center,
+    var(--ivory-300);
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  cursor: pointer;
+}
+.archive-select select:focus-visible {
+  outline: 2px solid var(--amber-bar);
+  outline-offset: 3px;
+}
+.archive-count {
+  margin: 0 0 0 auto;
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  color: var(--gold);
+}
+.archive-count strong {
+  font-weight: 400;
+  color: #fff;
+}
+
+/* Grid of entries */
+.archive-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 28px 22px;
+}
+.archive-card {
+  grid-column: span 6;
+  display: flex;
+  flex-direction: column;
+}
+.archive-card--feature {
+  grid-column: span 12;
+}
+.archive-card--compact {
+  grid-column: span 4;
+}
+.archive-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 8px;
+  padding: 4px 12px;
+  border-left: 3px solid var(--accent, var(--text-on-navy-2));
+  background: rgba(29, 40, 64, 0.88);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--text-on-navy-2);
+}
+.archive-place {
+  flex: none;
+  color: #fffaf0;
+}
+.archive-realm {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.archive-realm::before {
+  content: "·";
+  margin-right: 10px;
+  color: var(--accent, var(--gold));
+}
+.archive-label .stars {
+  flex: none;
+  margin-left: auto;
+}
+.archive-plate {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  border-radius: 4px;
+  background: var(--ivory-300);
+  box-shadow: 0 16px 34px -20px rgba(0, 0, 0, 0.85);
+  transition: box-shadow 0.35s var(--ease);
+}
+.archive-card:hover .archive-plate,
+.archive-card:focus-within .archive-plate {
+  box-shadow:
+    0 0 0 2px #ffffff,
+    0 0 0 6px rgba(236, 220, 184, 0.45),
+    0 0 40px rgba(236, 220, 184, 0.35);
+}
+.archive-frame {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  padding: 6px;
+  border: 0;
+  border-radius: 4px 4px 0 0;
+  background: #f6f2ea;
+  cursor: pointer;
+}
+.archive-frame .region-art {
+  width: 100%;
+  height: 100%;
+  border-radius: 2px;
+  transition: filter 0.4s;
+}
+.archive-card:hover .region-art {
+  filter: saturate(1.12) brightness(1.04);
+}
+/* Region title over the banner, like a place name appearing on arrival */
+.archive-epithet {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  z-index: 2;
+  padding: 18px 40px 8px 14px;
+  background: linear-gradient(90deg, rgba(16, 24, 46, 0.62), rgba(16, 24, 46, 0.32) 70%, transparent);
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  color: #fffaf0;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  border-radius: 0 0 0 2px;
+  mask-image: linear-gradient(180deg, transparent, #000 40%);
+}
+.archive-frame:focus-visible {
+  outline: 2px solid var(--amber-bar);
+  outline-offset: -4px;
+}
+.archive-caption {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px 2px;
+}
+.archive-caption h3 {
+  font-size: clamp(1.15rem, 1.8vw, 1.4rem);
+  color: var(--text-body);
+}
+.archive-year {
+  flex: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-tan);
+}
+.archive-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 16px 18px;
+  color: var(--text-body);
+}
+.archive-summary {
+  margin: 0;
+  font-size: 0.92rem;
+}
+.archive-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+/* Featured entry: banner beside its record */
+.archive-card--feature .archive-plate {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+}
+.archive-card--feature .archive-frame {
+  grid-row: span 2;
+  aspect-ratio: auto;
+  min-height: 360px;
+  border-radius: 4px 0 0 4px;
+}
+.archive-card--feature .archive-caption {
+  padding: 26px 26px 4px;
+}
+.archive-card--feature .archive-caption h3 {
+  font-size: clamp(1.6rem, 2.8vw, 2.2rem);
+}
+.archive-card--feature .archive-body {
+  padding: 6px 26px 26px;
+}
+.archive-card--feature .archive-summary {
+  font-size: 1rem;
+}
+.archive-card--compact .archive-frame {
+  aspect-ratio: 16 / 8;
+}
+.archive-card--compact .archive-summary {
+  font-size: 0.86rem;
+}
+
+@media (max-width: 960px) {
+  .archive-card,
+  .archive-card--compact {
+    grid-column: span 12;
+  }
+  .archive-card--feature .archive-plate {
+    display: flex;
+  }
+  .archive-card--feature .archive-frame {
+    min-height: 0;
+    aspect-ratio: 16 / 9;
+    border-radius: 4px 4px 0 0;
+  }
+  .archive-count {
+    margin-left: 0;
+  }
+}
+@media (min-width: 640px) and (max-width: 960px) {
+  .archive-card--compact {
+    grid-column: span 6;
+  }
+}
+
+/* Painterly grain over banner art */
+.archive-frame,
+.modal-visual {
+  position: relative;
+  overflow: hidden;
+}
+.archive-frame::after,
+.modal-visual::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.3;
+  mix-blend-mode: soft-light;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.modal-visual::after {
+  inset: 0;
+}

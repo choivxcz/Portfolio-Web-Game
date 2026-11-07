@@ -1,0 +1,68 @@
+/* ── Footer ── */
+.footer {
+  position: relative;
+  padding: 40px 0 48px;
+  border-top: 2px solid var(--gold);
+  background: linear-gradient(180deg, #2f3240, var(--leather));
+  text-align: center;
+  font-size: 0.88rem;
+  color: var(--text-on-navy-2);
+}
+.footer::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--gold);
+  background: var(--leather);
+  transform: translateX(-50%) rotate(45deg);
+}
+.footer-inner {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+.footer-elements {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+.footer p {
+  margin: 0;
+}
+.footer-small {
+  max-width: 600px;
+  font-size: 0.78rem;
+}
+.footer-top {
+  margin-top: 14px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: var(--font-display);
+  color: var(--gold-light);
+  text-decoration: none;
+}
+.footer-top:hover {
+  text-decoration: underline;
+}
+
+/* ════════════════════════════════════════════════════════════
+   REDUCED MOTION — static, calm experience
+   ════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .scene-layer {
+    transform: none !important;
+  }
+}

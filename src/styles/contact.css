@@ -1,0 +1,165 @@
+/* ════════════════════════════════════════════════════════════
+   CONTACT — arriving at a new destination at golden hour
+   ════════════════════════════════════════════════════════════ */
+.contact {
+  --accent: var(--electro);
+  isolation: isolate;
+  padding-block: clamp(110px, 14vw, 170px) clamp(70px, 9vw, 110px);
+  color: #fff;
+}
+.contact-scene {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+}
+.contact-scene .region-art {
+  width: 100%;
+  height: 100%;
+}
+.contact-scene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, var(--ivory-200) 0%, rgba(242, 236, 230, 0) 16%, transparent 55%, rgba(24, 28, 46, 0.4));
+}
+.contact-particles {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* "Region discovered" banner */
+.destination {
+  text-align: center;
+}
+.destination-kicker {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #fff7e2;
+  text-shadow: 0 1px 8px rgba(60, 40, 70, 0.55);
+}
+.destination-title {
+  font-size: clamp(2.6rem, 6.4vw, 4.6rem);
+  letter-spacing: 0.04em;
+  color: #fffaf0;
+  text-shadow:
+    0 2px 2px rgba(60, 40, 80, 0.25),
+    0 6px 30px rgba(60, 40, 90, 0.55);
+}
+.destination-rule {
+  width: min(420px, 80%);
+  max-width: none;
+  height: 16px;
+  margin: 10px auto 0;
+  color: #fff3d4;
+}
+.destination-sub {
+  margin: 12px 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.15rem, 2vw, 1.4rem);
+  color: #fff6e2;
+  text-shadow: 0 2px 12px rgba(60, 40, 90, 0.6);
+}
+.motion .destination.is-visible .destination-title {
+  animation: arrive 1.4s var(--ease) both;
+}
+.motion .destination.is-visible .destination-rule {
+  animation: rule-grow 1.4s var(--ease) 0.2s both;
+}
+@keyframes arrive {
+  from {
+    opacity: 0;
+    letter-spacing: 0.3em;
+  }
+}
+@keyframes rule-grow {
+  from {
+    opacity: 0;
+    transform: scaleX(0.15);
+  }
+}
+
+/* Contact panel */
+.contact-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 30px;
+  max-width: 980px;
+  margin: clamp(40px, 7vw, 70px) auto 0;
+  padding: clamp(26px, 4vw, 44px);
+  background: rgba(242, 236, 230, 0.97);
+  color: var(--text-body);
+}
+.contact-heading {
+  margin-bottom: 10px;
+  font-size: 1.6rem;
+  color: var(--text-brown);
+}
+.contact-copy p {
+  margin-bottom: 22px;
+}
+.contact-rows {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+.contact-row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--ivory-500);
+  border-radius: 3px;
+  background: var(--ivory-100);
+  color: var(--text-body);
+  text-decoration: none;
+  transition:
+    border-color 0.25s,
+    box-shadow 0.25s;
+}
+.contact-row:hover {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--gold-light);
+}
+.contact-row-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--text-strong);
+  color: var(--ivory-300);
+  font-size: 0.8rem;
+}
+.contact-row-text {
+  display: grid;
+  min-width: 0;
+}
+.contact-row-title {
+  font-family: var(--font-display);
+  font-size: 1.12rem;
+  color: var(--text-title);
+}
+.contact-row-detail {
+  overflow: hidden;
+  font-size: 0.85rem;
+  color: var(--text-tan);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.contact-row-go {
+  color: var(--text-tan-soft);
+}
+
+@media (max-width: 860px) {
+  .contact-panel {
+    grid-template-columns: 1fr;
+  }
+}

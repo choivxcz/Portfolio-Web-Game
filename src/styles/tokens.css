@@ -1,0 +1,79 @@
+/* ────────────────────────────────────────────────────────────
+   Design tokens.
+   Surface, text and gold values were measured from reference
+   screenshots of the game's Achievements, Archive and Handbook
+   screens (see README → Design notes).
+   ──────────────────────────────────────────────────────────── */
+:root {
+  /* Ivory / parchment surfaces */
+  --ivory-50: #f8f5f0;
+  --ivory-100: #f5f1eb; /* list rows */
+  --ivory-200: #f2ece6; /* book page */
+  --ivory-300: #ece5d8; /* pills, buttons */
+  --ivory-400: #ebe3d8; /* side columns */
+  --ivory-500: #e2d9cb; /* hairlines on ivory */
+  --ivory-600: #d6cab6;
+
+  /* Text on ivory */
+  --text-strong: #3b4255; /* slate, pill text */
+  --text-title: #555555; /* neutral gray row titles */
+  --text-body: #495366; /* slate body */
+  --text-tan: #7a6550; /* readable warm tan (darkened from #bca895) */
+  --text-tan-soft: #bca895; /* large / decorative tan only */
+  --text-brown: #84603d; /* panel headings */
+
+  /* Gold */
+  --gold: #d3bc8e;
+  --gold-light: #ecdcb8;
+  --gold-deep: #a88a55;
+  --gold-bronze: #8a6a42;
+  --amber: #f7ba3f;
+  --amber-bar: #ecb349;
+  --star: #ffcc32;
+
+  /* Navy (used selectively) */
+  --navy-row: #2d3848;
+  --navy-strip: #1d2840;
+  --navy-deep: #0a1430;
+  --navy-abyss: #050f29;
+  --slate-tile: #50596b;
+  --leather: #2a2c35;
+  --text-on-navy: #ece5d8;
+  --text-on-navy-2: #c2bebb;
+
+  /* Sky */
+  --sky-deep: #2f6fc4;
+  --sky: #4c9be3;
+  --sky-light: #a9d8f6;
+
+  /* Elemental accents */
+  --anemo: #4fc0a3;
+  --geo: #e9a72c;
+  --electro: #a77fd6;
+  --dendro: #8fbd2f;
+  --hydro: #2fa8e6;
+  --pyro: #e6702f;
+  --cryo: #7cc6db;
+
+  /* Item rarity backgrounds */
+  --r5: linear-gradient(160deg, #7f5230 0%, #b47a3e 55%, #d9a457 100%);
+  --r4: linear-gradient(160deg, #4f4780 0%, #7f63ae 55%, #a487cc 100%);
+  --r3: linear-gradient(160deg, #3e5b85 0%, #4b80ae 55%, #66a3cb 100%);
+
+  /* Type: flared display serif for headings, readable sans for body */
+  --font-display: "Marcellus", "Optima", "Candara", Georgia, serif;
+  --font-ui: "Zen Kaku Gothic New", "Noto Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: var(--font-display);
+
+  /* Layout */
+  --container: 1200px;
+  --gutter: clamp(16px, 4vw, 40px);
+  --radius: 12px;
+  --nav-h: 76px;
+
+  /* Motion */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+
+  --accent: var(--anemo);
+}
