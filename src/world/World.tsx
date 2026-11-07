@@ -25,6 +25,7 @@ import { LakeTown } from "./scene/structures/LakeTown";
 import { Village } from "./scene/structures/Village";
 import { Terrain } from "./scene/Terrain";
 import { Water } from "./scene/Water";
+import { Waterfall } from "./scene/Waterfall";
 import { player, useWorld, worldStore } from "./store";
 import { buildTerrainData, minimapImage, type TerrainData } from "./terrain";
 
@@ -201,6 +202,7 @@ export default function World() {
           <Terrain data={built.terrain} shadows={q.shadows > 0} />
           <Cliffs shadows={q.shadows > 0} />
           <Water heightTex={built.heightTex} n={built.terrain.n} reflect={quality === "high"} />
+          <Waterfall animate={animate} />
           <VegetationPatch heightTex={built.heightTex} n={built.terrain.n} count={q.grass} patch={quality === "low" ? 54 : 74} wind={animate ? 0.22 : 0} />
           <VegetationPatch heightTex={built.heightTex} n={built.terrain.n} count={q.flowers} patch={90} flowers wind={animate ? 0.08 : 0} />
           <WindClock animate={animate} />
