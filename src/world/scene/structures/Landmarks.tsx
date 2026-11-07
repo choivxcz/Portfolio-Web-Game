@@ -465,6 +465,109 @@ function Beacon({ light }: { light: boolean }) {
   );
 }
 
+/* ── Reviews: the Traveler's Guestbook ──
+   A small roofed lectern with an open book and quill, a mailbox for the reviews,
+   a bench and a lantern, on a round stone pad beside the first path. */
+function Guestbook() {
+  const star = useMemo(() => starGeometry(0.13, 0.05, 0.05), []);
+  return (
+    <group {...at("reviews")}>
+      {/* stone pad */}
+      <mesh material={MAT.stoneWarm} position={[0, 0.06, 0]} receiveShadow>
+        <cylinderGeometry args={[4.2, 4.4, 0.24, 24]} />
+      </mesh>
+      {/* lectern */}
+      <mesh material={MAT.woodDark} position={[0, 0.7, 0]} castShadow>
+        <boxGeometry args={[0.5, 1.2, 0.5]} />
+      </mesh>
+      <mesh material={MAT.wood} position={[0, 0.2, 0]} castShadow>
+        <boxGeometry args={[0.9, 0.16, 0.9]} />
+      </mesh>
+      <mesh material={MAT.wood} position={[0, 1.38, 0.05]} rotation={[-0.38, 0, 0]} castShadow>
+        <boxGeometry args={[1.5, 0.12, 1.05]} />
+      </mesh>
+      {/* open book: two pages and a ribbon */}
+      <group position={[0, 1.48, 0.07]} rotation={[-0.38, 0, 0]}>
+        <mesh material={MAT.cloth} position={[0, -0.02, 0]}>
+          <boxGeometry args={[1.3, 0.04, 0.88]} />
+        </mesh>
+        <mesh material={MAT.paper} position={[-0.31, 0.02, 0]} rotation={[0, 0, 0.1]}>
+          <boxGeometry args={[0.6, 0.04, 0.8]} />
+        </mesh>
+        <mesh material={MAT.paper} position={[0.31, 0.02, 0]} rotation={[0, 0, -0.1]}>
+          <boxGeometry args={[0.6, 0.04, 0.8]} />
+        </mesh>
+        <mesh material={MAT.rose} position={[0.05, 0.03, 0.5]}>
+          <boxGeometry args={[0.06, 0.02, 0.3]} />
+        </mesh>
+        {/* quill in an inkpot */}
+        <mesh material={MAT.stoneDark} position={[0.58, 0.08, -0.32]}>
+          <cylinderGeometry args={[0.07, 0.08, 0.14, 10]} />
+        </mesh>
+        <mesh material={MAT.paper} position={[0.62, 0.32, -0.36]} rotation={[0.3, 0, -0.35]}>
+          <coneGeometry args={[0.05, 0.5, 6]} />
+        </mesh>
+      </group>
+      {/* little roof on two posts */}
+      {[-0.95, 0.95].map((x) => (
+        <mesh key={x} material={MAT.woodDark} position={[x, 1.35, -0.55]} castShadow>
+          <boxGeometry args={[0.14, 2.7, 0.14]} />
+        </mesh>
+      ))}
+      <mesh material={MAT.roofRed} position={[0, 2.82, -0.2]} rotation={[0.45, 0, 0]} castShadow>
+        <boxGeometry args={[2.5, 0.12, 1.3]} />
+      </mesh>
+      <mesh material={MAT.roofRed} position={[0, 2.82, -0.9]} rotation={[-0.45, 0, 0]} castShadow>
+        <boxGeometry args={[2.5, 0.12, 0.8]} />
+      </mesh>
+      {/* sign board under the roof with a gold star */}
+      <mesh material={MAT.wood} position={[0, 2.38, -0.5]}>
+        <boxGeometry args={[1.5, 0.36, 0.08]} />
+      </mesh>
+      <mesh geometry={star} material={MAT.gold} position={[0, 2.38, -0.44]} />
+      {/* mailbox for the reviews */}
+      <group position={[2.3, 0, 0.4]} rotation={[0, -0.35, 0]}>
+        <mesh material={MAT.woodDark} position={[0, 0.6, 0]} castShadow>
+          <boxGeometry args={[0.16, 1.2, 0.16]} />
+        </mesh>
+        <mesh material={MAT.roofBlue} position={[0, 1.36, 0]} castShadow>
+          <boxGeometry args={[0.55, 0.42, 0.75]} />
+        </mesh>
+        <mesh material={MAT.roofBlue} position={[0, 1.57, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.275, 0.275, 0.75, 12, 1, false, 0, Math.PI]} />
+        </mesh>
+        <mesh material={MAT.paper} position={[0, 1.42, 0.38]} rotation={[0.2, 0, 0]}>
+          <boxGeometry args={[0.36, 0.22, 0.02]} />
+        </mesh>
+        <mesh material={MAT.flowerRed} position={[0.3, 1.5, -0.1]}>
+          <boxGeometry args={[0.04, 0.32, 0.08]} />
+        </mesh>
+      </group>
+      {/* bench */}
+      <group position={[-2.6, 0, -0.6]} rotation={[0, 0.45, 0]}>
+        <mesh material={MAT.wood} position={[0, 0.5, 0]} castShadow>
+          <boxGeometry args={[1.8, 0.1, 0.5]} />
+        </mesh>
+        {[-0.7, 0.7].map((x) => (
+          <mesh key={x} material={MAT.woodDark} position={[x, 0.25, 0]}>
+            <boxGeometry args={[0.12, 0.5, 0.42]} />
+          </mesh>
+        ))}
+        <mesh material={MAT.wood} position={[0, 0.85, -0.22]} rotation={[-0.15, 0, 0]}>
+          <boxGeometry args={[1.8, 0.32, 0.08]} />
+        </mesh>
+      </group>
+      {/* flowers along the pad edge */}
+      {[-1.6, -0.9, 1.1, 1.7].map((x, i) => (
+        <mesh key={x} material={i % 2 ? MAT.flowerYellow : MAT.flowerRed} position={[x, 0.32, 2.3 + (i % 2) * 0.3]}>
+          <icosahedronGeometry args={[0.2, 0]} />
+        </mesh>
+      ))}
+      <Lantern position={[1.6, 0.18, 1.5]} />
+    </group>
+  );
+}
+
 export function Landmarks({ lights }: { lights: boolean }) {
   return (
     <>
@@ -473,6 +576,7 @@ export function Landmarks({ lights }: { lights: boolean }) {
       <ExpeditionBoard />
       <HallOfAchievements />
       <Beacon light={lights} />
+      <Guestbook />
     </>
   );
 }

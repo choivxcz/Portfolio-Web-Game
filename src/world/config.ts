@@ -2,7 +2,7 @@
  * World layout. Units are metres; +x is east, -z is north.
  * The visitor starts at SPAWN looking north toward the village.
  */
-export type LandmarkId = "about" | "skills" | "projects" | "achievements" | "contact";
+export type LandmarkId = "about" | "skills" | "projects" | "achievements" | "contact" | "reviews";
 export type Vec2 = [number, number];
 
 export interface Landmark {
@@ -74,6 +74,18 @@ export const LANDMARKS: Landmark[] = [
     radius: 23,
     approach: [102, -93],
     bump: 9,
+  },
+  {
+    id: "reviews",
+    name: "Traveler's Guestbook",
+    section: "Reviews",
+    prompt: "Sign the Traveler's Guestbook",
+    // beside the first path, just past the starting point
+    pos: [10, 37],
+    pad: 6,
+    radius: 9,
+    approach: [4, 39],
+    bump: 0,
   },
 ];
 

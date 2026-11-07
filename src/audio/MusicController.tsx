@@ -17,7 +17,7 @@ export function MusicController() {
 
   useEffect(() => {
     // perceived loudness grows roughly with the square of the gain
-    music.set(on, Math.pow(volume / 10, 2) * 0.9);
+    music.set(on, Math.pow(volume / 10, 1.6));
   }, [on, volume]);
 
   useEffect(() => {

@@ -6,6 +6,7 @@ import { Hero } from "./components/Hero";
 import { Journey } from "./components/Journey";
 import { Nav } from "./components/Nav";
 import { Projects } from "./components/Projects";
+import { Reviews } from "./components/Reviews";
 import { Skills } from "./components/Skills";
 import { useReveal } from "./hooks/useReveal";
 
@@ -31,6 +32,7 @@ export default function ClassicSite({ notice }: { notice?: string }) {
         <Projects />
         <Achievements />
         <Contact />
+        <Reviews />
       </main>
       <Footer />
     </>

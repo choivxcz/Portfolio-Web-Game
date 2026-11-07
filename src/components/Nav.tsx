@@ -12,6 +12,7 @@ const links = [
   { id: "projects", label: "Projects" },
   { id: "achievements", label: "Achievements" },
   { id: "contact", label: "Contact" },
+  { id: "reviews", label: "Reviews" },
 ];
 
 export function Nav() {

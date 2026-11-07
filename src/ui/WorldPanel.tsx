@@ -6,6 +6,7 @@ import { CloseIcon } from "../components/Icons";
 import { Journey } from "../components/Journey";
 import { NavIcon } from "../components/NavIcons";
 import { Projects } from "../components/Projects";
+import { Reviews } from "../components/Reviews";
 import { Skills } from "../components/Skills";
 import { LANDMARKS, type LandmarkId } from "../world/config";
 import { useWorld, worldStore } from "../world/store";
@@ -21,6 +22,7 @@ const CONTENT: Record<LandmarkId, () => ReactNode> = {
   projects: () => <Projects />,
   achievements: () => <Achievements />,
   contact: () => <Contact />,
+  reviews: () => <Reviews />,
 };
 
 /**

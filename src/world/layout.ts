@@ -98,6 +98,12 @@ export function structureColliders(): Collider[] {
   add(ha.pos, hy, 0, 0, 1.8);
   // Beacon tower
   add(L("contact").pos, 0, 0, 0, 4.4);
+  // Traveler's Guestbook: lectern, mailbox and bench
+  const gb = L("reviews");
+  const gy = facing("reviews");
+  add(gb.pos, gy, 0, 0, 1.3);
+  add(gb.pos, gy, 2.3, 0.4, 0.5);
+  add(gb.pos, gy, -2.6, -0.6, 0.9);
   // Village
   for (const h of HOUSES) out.push({ x: h.x, z: h.z, r: Math.max(h.w, h.d) * 0.62 });
   out.push({ x: WINDMILL.x, z: WINDMILL.z, r: 2.8 });

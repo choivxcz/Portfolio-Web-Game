@@ -1,8 +1,8 @@
 import { rng } from "../utils/random";
-import { LANDMARKS, PLAY_CENTER, PLAY_RADIUS, WORLD_SIZE } from "./config";
+import { LANDMARKS, PATH_WIDTH, PLAY_CENTER, PLAY_RADIUS, WORLD_SIZE } from "./config";
 import { GROVES } from "./layout";
 import { createNoise, fbm } from "./noise";
-import type { TerrainData } from "./terrain";
+import { pathDistance, type TerrainData } from "./terrain";
 
 export interface Placement {
   x: number;
@@ -41,6 +41,23 @@ function spaced(list: { x: number; z: number }[], x: number, z: number, min: num
   return true;
 }
 
+/** How far a tree's trunk must stand from a path's centre line so the canopy stays off the dirt. */
+const treeClearance = (s: number) => PATH_WIDTH + 1.2 + s;
+
+/** The nearest spot to (x, z) at least `clear` metres from every path (searching outward in rings). */
+function offPath(x: number, z: number, clear: number): [number, number] {
+  if (pathDistance(x, z) >= clear) return [x, z];
+  for (let rad = 1; rad <= 12; rad++) {
+    for (let k = 0; k < 16; k++) {
+      const a = (k / 16) * Math.PI * 2;
+      const nx = x + Math.cos(a) * rad;
+      const nz = z + Math.sin(a) * rad;
+      if (pathDistance(nx, nz) >= clear) return [nx, nz];
+    }
+  }
+  return [x, z];
+}
+
 export function scatterTrees(t: TerrainData, count: number): Placement[] {
   const r = rng(404);
   const out: Placement[] = [];
@@ -51,10 +68,11 @@ export function scatterTrees(t: TerrainData, count: number): Placement[] {
     for (let i = 0; i < n; i++) {
       const ang = (i / n) * Math.PI * 2 + g() * 0.8;
       const d = i === 0 ? 0 : 4.2 + g() * 1.8;
-      const x = grove.x + Math.cos(ang) * d;
-      const z = grove.z + Math.sin(ang) * d;
+      const s = (i === 0 ? 1.25 : 0.9) + g() * 0.35;
+      // a grove beside a path steps back from it rather than growing on the dirt
+      const [x, z] = offPath(grove.x + Math.cos(ang) * d, grove.z + Math.sin(ang) * d, treeClearance(s));
       const variant = [TREE_KINDS.round, TREE_KINDS.tall, TREE_KINDS.autumn, TREE_KINDS.round, TREE_KINDS.tall][i % 5];
-      out.push({ x, y: gridSample(t, x, z).h - 0.2, z, s: (i === 0 ? 1.25 : 0.9) + g() * 0.35, ry: g() * Math.PI * 2, variant });
+      out.push({ x, y: gridSample(t, x, z).h - 0.2, z, s, ry: g() * Math.PI * 2, variant });
     }
   }
   for (let a = 0; a < count * 30 && out.length < count; a++) {
@@ -74,11 +92,18 @@ export function scatterTrees(t: TerrainData, count: number): Placement[] {
     }
     if (LANDMARKS.some((L) => Math.hypot(x - L.approach[0], z - L.approach[1]) < 11 || Math.hypot(x - L.pos[0], z - L.pos[1]) < L.pad + 5)) continue;
     if (!spaced(out, x, z, variant === TREE_KINDS.pine ? 3.2 : 4.6)) continue;
-    out.push({ x, y: h - 0.2, z, s: 0.85 + r() * 0.55, ry: r() * Math.PI * 2, variant });
+    const s = 0.85 + r() * 0.55;
+    const ry = r() * Math.PI * 2;
+    // the grass map is coarse, so check the paths directly too
+    if (pathDistance(x, z) < treeClearance(s)) continue;
+    out.push({ x, y: h - 0.2, z, s, ry, variant });
   }
   // hero trees that frame the opening view and the village approach
   const HERO: [number, number, number, number][] = [[-13, 33, 1.5, 0], [15, 27, 1.35, 2], [-17, 4, 1.3, 1], [19, -14, 1.4, 0], [-24, -24, 1.25, 2]];
-  for (const [x, z, s, variant] of HERO) out.push({ x, y: gridSample(t, x, z).h - 0.2, z, s, ry: x * 0.7, variant });
+  for (const [hx, hz, s, variant] of HERO) {
+    const [x, z] = offPath(hx, hz, treeClearance(s));
+    out.push({ x, y: gridSample(t, x, z).h - 0.2, z, s, ry: hx * 0.7, variant });
+  }
   return out;
 }
 
@@ -117,6 +142,7 @@ export function scatterRocks(t: TerrainData, count: number): Placement[] {
     const y = h - s * 0.25;
     const ry = r() * Math.PI * 2;
     const variant = r() < 0.5 ? 0 : 1;
+    if (pathDistance(x, z) < PATH_WIDTH + 0.6 + s) continue; // keep the paths clear
     // skip rocks perched on a slope or bank edge, where part of them would hang in the air
     if (y - lowestGround(t, x, z, s * 1.1) > 0.5) continue;
     out.push({ x, y, z, s, ry, variant });
@@ -128,7 +154,7 @@ export function scatterRocks(t: TerrainData, count: number): Placement[] {
 export function scatterPlants(t: TerrainData, trees: Placement[], density: number) {
   const r = rng(1212);
   const ok = (x: number, z: number) =>
-    gridSample(t, x, z).grass > 0.55 && !LANDMARKS.some((L) => Math.hypot(x - L.approach[0], z - L.approach[1]) < 7);
+    gridSample(t, x, z).grass > 0.55 && pathDistance(x, z) > PATH_WIDTH + 0.8 && !LANDMARKS.some((L) => Math.hypot(x - L.approach[0], z - L.approach[1]) < 7);
   const near = (count: number, min: number, max: number, scale: [number, number]) => {
     const out: Placement[] = [];
     for (let a = 0; a < count * 6 && out.length < count && trees.length; a++) {

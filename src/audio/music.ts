@@ -265,23 +265,39 @@ export function renderSong(): Promise<AudioBuffer> {
   };
   // Create each bar's notes just before it plays: nodes waiting for a far-off start
   // still cost processing time, so building the whole song up front renders far slower.
-  scheduleBar(0);
-  for (let b = 1; b < SONG.length; b++) {
-    void ctx.suspend(b * BAR - 0.4).then(() => {
-      scheduleBar(b);
-      void ctx.resume();
-    });
+  // (Firefox can't pause an offline render, so there every bar is built up front: slower, same result.)
+  if (typeof ctx.suspend === "function") {
+    scheduleBar(0);
+    for (let b = 1; b < SONG.length; b++) {
+      ctx
+        .suspend(b * BAR - 0.4)
+        .then(() => {
+          scheduleBar(b);
+          return ctx.resume();
+        })
+        .catch(() => undefined);
+    }
+  } else {
+    for (let b = 0; b < SONG.length; b++) scheduleBar(b);
   }
 
   return ctx.startRendering().then((rendered) => {
     // fold the reverb tail back onto the start: a seamless loop
     const loopLen = Math.round(LOOP * RATE);
-    const buf = new AudioBuffer({ numberOfChannels: 2, length: loopLen, sampleRate: RATE });
+    const buf = ctx.createBuffer(2, loopLen, RATE);
+    let peak = 0;
     for (let ch = 0; ch < 2; ch++) {
       const src = rendered.getChannelData(ch);
       const dst = buf.getChannelData(ch);
       dst.set(src.subarray(0, loopLen));
       for (let i = loopLen; i < src.length; i++) dst[i - loopLen] += src[i];
+      for (let i = 0; i < loopLen; i++) peak = Math.max(peak, Math.abs(dst[i]));
+    }
+    // normalize: the synth voices are mixed quietly, so lift the whole piece to a healthy level
+    const k = peak > 0 ? 0.89 / peak : 1;
+    for (let ch = 0; ch < 2; ch++) {
+      const d = buf.getChannelData(ch);
+      for (let i = 0; i < loopLen; i++) d[i] *= k;
     }
     return buf;
   });
@@ -310,12 +326,16 @@ class Music {
     if (!this.ctx) {
       const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!Ctx) return;
+      // iPhone: play as media, so the ring/silent switch doesn't mute the music (Safari 17+)
+      const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
+      if (session) session.type = "playback";
       this.ctx = new Ctx();
       this.gain = this.ctx.createGain();
       this.gain.gain.value = 0;
       this.gain.connect(this.ctx.destination);
     }
-    if (this.ctx.state === "suspended" && !document.hidden) void this.ctx.resume();
+    // "suspended" until a gesture; iOS can also leave it "interrupted" (e.g. after a call)
+    if (this.ctx.state !== "running" && !document.hidden) void this.ctx.resume().catch(() => undefined);
     if (!this.enabled) return;
     if (!this.source && !this.loading) {
       this.loading = this.prepare()

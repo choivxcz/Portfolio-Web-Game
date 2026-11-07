@@ -123,7 +123,7 @@ function useFocusOnOpen(ref: RefObject<HTMLElement | null>, key: unknown) {
 }
 
 /* ═════════════════════════════════════ Pause menu */
-const SHORT: Record<LandmarkId, string> = { about: "About", skills: "Skills", projects: "Projects", achievements: "Achievements", contact: "Contact" };
+const SHORT: Record<LandmarkId, string> = { about: "About", skills: "Skills", projects: "Projects", achievements: "Achievements", contact: "Contact", reviews: "Reviews" };
 
 export function GameMenus() {
   const menu = useWorld((s) => s.menu);

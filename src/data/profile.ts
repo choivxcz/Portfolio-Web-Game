@@ -48,6 +48,17 @@ export const profile = {
 
   /** GitHub shows "Available for hire" on this profile. */
   openToOpportunities: true,
+
+  /**
+   * Private reviews (the Traveler's Guestbook). Each review is emailed to you through
+   * Web3Forms; nothing is stored or shown on the site. This is the same access key as
+   * your main portfolio (choivxcz.github.io), so reviews from both arrive in one inbox.
+   * The key is designed to be public: it only lets the form send mail to you.
+   * Leave it empty to hide the review form.
+   */
+  reviews: {
+    web3formsAccessKey: "1b56f644-daf1-4e26-94b6-8ae1d3435e52",
+  },
 };
 
 export type Profile = typeof profile;
