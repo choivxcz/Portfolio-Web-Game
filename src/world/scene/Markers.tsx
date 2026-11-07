@@ -5,7 +5,7 @@ import { LANDMARKS, type LandmarkId } from "../config";
 import { player, travelTo } from "../store";
 import { terrainHeight } from "../terrain";
 
-const HEIGHT: Record<LandmarkId, number> = { about: 8, skills: 23, projects: 6.5, achievements: 10, contact: 31, reviews: 5.5 };
+const HEIGHT: Record<LandmarkId, number> = { about: 14, skills: 23, projects: 6.5, achievements: 19, contact: 31, reviews: 5.5 };
 
 /** Floating location markers above each landmark, with live distance. */
 export function Markers() {

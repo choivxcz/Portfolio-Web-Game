@@ -9,7 +9,7 @@ import { projects, type Project } from "../../../data/projects";
 import { LANDMARKS, type LandmarkId } from "../../config";
 import { facing } from "../../layout";
 import { terrainHeight } from "../../terrain";
-import { Column, Lantern, MAT, archGeometry, columnGeometry, gableFill, gableGeometry, starGeometry } from "./parts";
+import { Column, Lantern, MAT, PavilionRoof, archGeometry, columnGeometry, gableFill, gableGeometry, starGeometry } from "./parts";
 
 const at = (id: LandmarkId) => {
   const L = LANDMARKS.find((l) => l.id === id)!;
@@ -55,9 +55,10 @@ function JournalShrine() {
       <mesh geometry={steps} material={MAT.stone} receiveShadow castShadow />
       {Array.from({ length: 6 }, (_, i) => {
         const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
-        const broken = i === 1 || i === 4;
-        return <Column key={i} position={[Math.cos(a) * 5.4, 0.9, Math.sin(a) * 5.4]} height={broken ? 2.2 : 4.6} radius={0.42} broken={broken} />;
+        return <Column key={i} position={[Math.cos(a) * 5.4, 0.9, Math.sin(a) * 5.4]} height={5} radius={0.42} />;
       })}
+      {/* hexagonal pavilion roof; its corners sit over the columns */}
+      <PavilionRoof ring={5.4} radius={7.4} height={4.2} sides={6} phiStart={Math.PI / 3} material={MAT.roofBlue} position={[0, 5.9, 0]} />
       {/* stele with gold emblem */}
       <mesh geometry={stele} material={MAT.stoneWarm} position={[0, 1.3, -2.9]} castShadow />
       <mesh geometry={star} material={MAT.gold} position={[0, 4.2, -2.25]} />
@@ -375,17 +376,18 @@ function HallOfAchievements() {
       ))}
       {Array.from({ length: 8 }, (_, i) => {
         const a = (i / 8) * Math.PI * 2;
-        const broken = i === 3 || i === 6;
-        return <Column key={i} position={[Math.cos(a) * 6.8, 1.3, Math.sin(a) * 6.8]} height={broken ? 2.8 : 6.2} radius={0.5} broken={broken} />;
+        return <Column key={i} position={[Math.cos(a) * 6.8, 1.3, Math.sin(a) * 6.8]} height={6.2} radius={0.5} />;
       })}
+      {/* octagonal roof with a glowing lantern cupola; corners sit over the columns */}
+      <PavilionRoof ring={6.8} radius={9.4} height={4.4} sides={8} phiStart={Math.PI / 2} material={MAT.roofRed} cupola position={[0, 7.5, 0]} />
       <mesh geometry={arch} material={MAT.stone} position={[0, 1.3, 8]} castShadow />
       <mesh material={MAT.gold} position={[0, 7.4, 8.6]} rotation={[0, 0, Math.PI / 4]}>
         <boxGeometry args={[0.6, 0.6, 0.2]} />
       </mesh>
-      {/* back walls, partly fallen */}
-      {[-4.5, -1.5, 1.5, 4.5].map((x, i) => (
-        <mesh key={x} material={MAT.stoneDark} position={[x, 1.3 + (i % 2 ? 1.4 : 2.2), -7.4]} castShadow>
-          <boxGeometry args={[2.9, i % 2 ? 2.8 : 4.4, 0.9]} />
+      {/* back wall, up to the roof */}
+      {[-4.5, -1.5, 1.5, 4.5].map((x) => (
+        <mesh key={x} material={MAT.stoneDark} position={[x, 1.3 + 3.1, -7.4]} castShadow>
+          <boxGeometry args={[2.9, 6.2, 0.9]} />
         </mesh>
       ))}
       {/* pedestal and floating medal */}
