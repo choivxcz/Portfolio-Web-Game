@@ -63,7 +63,7 @@ function useWorldBuild(quality: Quality): Built | null {
       const plants = scatterPlants(terrain, trees, q.trees / 200);
       step(0.75, "Raising the ruins");
       await nextFrame();
-      const colliders = [...structureColliders(), ...collidersFor(trees, rocks)];
+      const colliders = [...structureColliders(), ...collidersFor(trees, rocks, plants.bushes)];
       const heightTex = createHeightTexture(terrain);
       if (cancelled) return;
       step(0.88, "Lighting the sky");

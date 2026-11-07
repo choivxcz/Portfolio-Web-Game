@@ -185,9 +185,12 @@ export function scatterPlants(t: TerrainData, trees: Placement[], density: numbe
   };
 }
 
-export function collidersFor(trees: Placement[], rocks: Placement[]): Collider[] {
+/** Trunks, every boulder, and the bushes (ferns and flowers stay walk-through). */
+export function collidersFor(trees: Placement[], rocks: Placement[], bushes: Placement[] = []): Collider[] {
   return [
     ...trees.map((p) => ({ x: p.x, z: p.z, r: 0.7 * p.s })),
-    ...rocks.filter((p) => p.s > 0.9).map((p) => ({ x: p.x, z: p.z, r: p.s * (p.variant === 2 ? 1.05 : 0.85) })),
+    // boulder footprints measured from the models: about 1.1 × scale across, less once sunk into the ground
+    ...rocks.map((p) => ({ x: p.x, z: p.z, r: p.s * (p.variant === 2 ? 1.05 : 0.9) })),
+    ...bushes.map((p) => ({ x: p.x, z: p.z, r: 0.65 * p.s })),
   ];
 }

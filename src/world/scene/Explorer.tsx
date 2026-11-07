@@ -4,7 +4,7 @@ import * as THREE from "three";
 import { LANDMARKS, SPAWN, SPAWN_YAW } from "../config";
 import type { Collider } from "../scatter";
 import { input, player, worldStore } from "../store";
-import { groundAt, isWalkable } from "../terrain";
+import { blockedByLedge, groundAt, isWalkable } from "../terrain";
 
 const BODY = 0.6; // explorer radius for collisions
 const CAM_DIST = { near: 11, default: 17, far: 24 } as const;
@@ -214,8 +214,9 @@ export function Explorer({ colliders }: { colliders: Collider[] }) {
         const diff = Math.atan2(Math.sin(want - player.facing), Math.cos(want - player.facing));
         player.facing += diff * (1 - Math.exp(-dt * 14));
         // move each axis separately so the explorer slides along obstacles
-        if (isWalkable(player.x + mx, player.z)) player.x += mx;
-        if (isWalkable(player.x, player.z + mz)) player.z += mz;
+        // (a platform edge taller than a step blocks the way, unless you jump onto it)
+        if (isWalkable(player.x + mx, player.z) && !blockedByLedge(player.x, player.z, player.x + mx, player.z, player.air)) player.x += mx;
+        if (isWalkable(player.x, player.z + mz) && !blockedByLedge(player.x, player.z, player.x, player.z + mz, player.air)) player.z += mz;
         for (const c of near(player.x, player.z)) {
           const dx = player.x - c.x;
           const dz = player.z - c.z;

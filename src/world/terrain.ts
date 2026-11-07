@@ -1,6 +1,6 @@
 import { BRIDGE, ISLAND, LAKE, LANDMARKS, PATHS, PATH_WIDTH, PLAY_CENTER, PLAY_RADIUS, STREAM, WATER_LEVEL, WORLD_SIZE, type Vec2 } from "./config";
 import { createNoise, fbm, lerp, smoothstep } from "./noise";
-import { GROVES, HOUSES, PROPS, WINDMILL } from "./layout";
+import { GROVES, HOUSES, PROPS, WINDMILL, facing } from "./layout";
 
 const nA = createNoise(11);
 const nB = createNoise(23);
@@ -159,10 +159,63 @@ export function bridgeDeck(x: number, z: number): number | null {
 }
 export const bridgeEnds = { a: bEndA, b: bEndB };
 
+/**
+ * Floors of the landmark buildings (their stone platforms and steps), so the explorer
+ * walks up the steps and stands on top instead of sinking into the stone.
+ * Returns the floor height at (x, z), or null where there's no floor.
+ */
+const FLOOR_SITES = (() => {
+  const site = (id: (typeof LANDMARKS)[number]["id"]) => {
+    const L = LANDMARKS.find((l) => l.id === id)!;
+    return { x: L.pos[0], z: L.pos[1], yaw: facing(id), base: terrainHeight(L.pos[0], L.pos[1]) };
+  };
+  return { about: site("about"), skills: site("skills"), achievements: site("achievements"), reviews: site("reviews") };
+})();
+/** World point → a site's local frame (inverse of layout.toWorld). */
+const local = (s: { x: number; z: number; yaw: number }, x: number, z: number) => {
+  const dx = x - s.x;
+  const dz = z - s.z;
+  const c = Math.cos(s.yaw);
+  const n = Math.sin(s.yaw);
+  return [dx * c - dz * n, dx * n + dz * c] as const;
+};
+const inRect = (lx: number, lz: number, cx: number, cz: number, w: number, d: number) => Math.abs(lx - cx) <= w / 2 && Math.abs(lz - cz) <= d / 2;
+
+export function floorAt(x: number, z: number): number | null {
+  const { about, skills, achievements, reviews } = FLOOR_SITES;
+  // Journal shrine: three round steps
+  let d = Math.hypot(x - about.x, z - about.z);
+  if (d <= 7.2) return about.base + (d <= 4.6 ? 1.3 : d <= 5.9 ? 0.9 : 0.45);
+  // Academy: a raised terrace with three steps up at the front
+  let [lx, lz] = local(skills, x, z);
+  if (inRect(lx, lz, 0, 0.5, 17, 15)) return skills.base + 1.2;
+  for (let i = 2; i >= 0; i--) if (inRect(lx, lz, 0, 8.6 - i * 0.7, 16, 1.6 + i * 0.1)) return skills.base + 0.4 * (i + 1);
+  // Hall of Achievements: two stacked square platforms
+  [lx, lz] = local(achievements, x, z);
+  if (inRect(lx, lz, 0, 0, 15, 15)) return achievements.base + 1.3;
+  if (inRect(lx, lz, 0, 0, 17, 17)) return achievements.base + 0.6;
+  // Guestbook: a low stone pad
+  d = Math.hypot(x - reviews.x, z - reviews.z);
+  if (d <= 4.3) return reviews.base + 0.18;
+  return null;
+}
+
+/** The tallest step the explorer can walk up without jumping. */
+export const STEP_HEIGHT = 0.75;
+
 export function groundAt(x: number, z: number): number {
-  const h = terrainHeight(x, z);
+  let h = terrainHeight(x, z);
   const deck = bridgeDeck(x, z);
-  return deck !== null ? Math.max(h, deck) : h;
+  if (deck !== null) h = Math.max(h, deck);
+  const floor = floorAt(x, z);
+  return floor !== null ? Math.max(h, floor) : h;
+}
+
+/** True when moving from one point to the next would mean climbing a platform edge taller than a step. */
+export function blockedByLedge(fromX: number, fromZ: number, toX: number, toZ: number, air: number) {
+  const floor = floorAt(toX, toZ);
+  if (floor === null) return false;
+  return floor - groundAt(fromX, fromZ) > STEP_HEIGHT + air;
 }
 
 export function isWalkable(x: number, z: number): boolean {
