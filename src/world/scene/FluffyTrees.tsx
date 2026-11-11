@@ -2,6 +2,7 @@ import { useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { rng } from "../../utils/random";
+import { ENV } from "../config";
 import type { Placement } from "../scatter";
 import { wind } from "./Models";
 import { withDetail } from "./structures/detail";
@@ -73,9 +74,9 @@ const TALL: Clump[] = [
 ];
 
 const SPECS: Spec[] = [
-  { clumps: ROUND, count: 460, size: [1.05, 1.5], dark: "#2a6631", light: "#7dbf47", trunk: 3.8, branches: 3 },
-  { clumps: TALL, count: 370, size: [0.95, 1.35], dark: "#2e6c37", light: "#8ccd52", trunk: 4.8, branches: 2 },
-  { clumps: ROUND, count: 420, size: [1.05, 1.5], dark: "#9a8a1f", light: "#efe456", trunk: 3.6, branches: 3 },
+  { clumps: ROUND, count: 460, size: [1.05, 1.5], ...ENV.palette.treeGreen, trunk: 3.8, branches: 3 },
+  { clumps: TALL, count: 370, size: [0.95, 1.35], ...ENV.palette.treeGreenTall, trunk: 4.8, branches: 2 },
+  { clumps: ROUND, count: 420, size: [1.05, 1.5], ...ENV.palette.treeGold, trunk: 3.6, branches: 3 },
 ];
 
 function canopyGeometry(spec: Spec, seed: number) {

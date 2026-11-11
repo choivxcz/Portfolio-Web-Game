@@ -2,7 +2,7 @@ import { PerformanceMonitor } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import { QUALITY, type Quality } from "./config";
+import { ENV, QUALITY, type Quality } from "./config";
 import { structureColliders } from "./layout";
 import { collidersFor, scatterPlants, scatterRocks, scatterTrees, type Collider, type Placement } from "./scatter";
 import { GltfPines, GltfRocks, Undergrowth, WindClock, type PlantSet } from "./scene/Models";
@@ -18,6 +18,7 @@ import { Cliffs } from "./scene/Cliffs";
 import { insideMesa, mesaTrees } from "./cliffLayout";
 import { PostFX } from "./scene/PostFX";
 import "./scene/toonShading";
+import "./scene/atmosphere";
 import { SKY, SUN_DIR, Sky } from "./scene/Sky";
 import { Landmarks } from "./scene/structures/Landmarks";
 import { StaticBatch } from "./scene/StaticBatch";
@@ -190,7 +191,8 @@ export default function World() {
       }}
     >
       <PerformanceMonitor onDecline={() => setDpr(1)} />
-      <fog attach="fog" args={[SKY.horizon, 160, 1500]} />
+      {/* aerial perspective: see scene/atmosphere.ts for how this fog is drawn */}
+      <fog attach="fog" args={[SKY.horizon, ENV.haze.start, ENV.haze.far]} />
       {/* cool sky fill: everything out of the sun picks up a soft blue cast */}
       <hemisphereLight args={["#b9cdff", "#9aa874", 1.0]} />
       <ambientLight color="#dde6ff" intensity={0.12} />

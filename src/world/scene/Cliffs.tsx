@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { rng } from "../../utils/random";
 import { MESAS, type Mesa } from "../cliffLayout";
+import { ENV } from "../config";
 import { createNoise, type Noise2D } from "../noise";
 import { withDetail } from "./structures/detail";
 import { toonRamp } from "./Vegetation";
@@ -12,12 +13,13 @@ import { toonRamp } from "./Vegetation";
  * cracks, stepped strata whose lower edges overhang (so each band casts a shadow line),
  * darker recesses, moss on the ledges, and an overhanging grassy cap.
  */
-const STONE_LOW = new THREE.Color("#8793aa");
-const STONE_HIGH = new THREE.Color("#c6cdd9");
-const STONE_WARM = new THREE.Color("#c9bfae");
-const MOSS = new THREE.Color("#7f9f55");
-const GRASS = new THREE.Color("#7db649");
-const GRASS_LIGHT = new THREE.Color("#a3cf5b");
+// warm cream stone with cool lower faces; the grassy cap matches the meadow below
+const STONE_LOW = new THREE.Color(ENV.palette.stoneLow);
+const STONE_HIGH = new THREE.Color(ENV.palette.stoneHigh);
+const STONE_WARM = new THREE.Color(ENV.palette.stoneWarm);
+const MOSS = new THREE.Color(ENV.palette.moss);
+const GRASS = new THREE.Color(ENV.palette.groundB);
+const GRASS_LIGHT = new THREE.Color(ENV.palette.grassTip);
 
 function mesaGeometry(m: Mesa, noise: Noise2D) {
   const r = rng(m.seed * 31 + 7);

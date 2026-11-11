@@ -4,15 +4,19 @@ import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { player, useWorld, worldStore } from "../store";
+import { HERO } from "../config";
+import { buildHero, heroClips } from "./hero";
 import { attachOutline, outlineMaterial } from "./outline";
 import { withRim } from "./toonShading";
 
 /**
- * The explorer: a CC0 KayKit adventurer (see public/models/CREDITS.md) redrawn with
- * the world's cel shading, a rim light and an ink outline, animated from movement.
+ * The explorer: the original hero (scene/hero.ts, built on the KayKit rig) or a CC0
+ * KayKit adventurer (see public/models/CREDITS.md), drawn with the world's cel
+ * shading, a rim light and an ink outline, and animated from movement.
  */
 const BASE = `${import.meta.env.BASE_URL}models/characters/`;
 export const CHARACTERS = {
+  hero: { url: `${BASE}ranger.glb`, label: "Hero", ink: "#2a1f2a" },
   ranger: { url: `${BASE}ranger.glb`, label: "Ranger", ink: "#3b2a2e" },
   mage: { url: `${BASE}mage.glb`, label: "Mage", ink: "#2c2840" },
 } as const;
@@ -24,13 +28,20 @@ type Clip = "Idle" | "Walking_A" | "Running_A" | "Jump_Start" | "Jump_Idle" | "J
 export function Avatar({ shadows }: { shadows: boolean }) {
   const id = useWorld((s) => s.prefs.character);
   const outlines = useWorld((s) => s.prefs.outlines);
-  const spec = CHARACTERS[id] ?? CHARACTERS.ranger;
+  const spec = CHARACTERS[id] ?? CHARACTERS.hero;
+  const isHero = id === "hero" || !CHARACTERS[id];
   const gltf = useGLTF(spec.url);
   const group = useRef<THREE.Group>(null);
 
   // Toon materials + outline shells on a private copy of the model
-  const { root, shells } = useMemo(() => {
+  const { root, shells, cape } = useMemo(() => {
     const root = cloneSkinned(gltf.scene);
+    if (isHero) {
+      const hero = buildHero(root, shadows);
+      root.traverse((o) => (o.frustumCulled = false)); // animated: the rest-pose bounds don't follow the pose
+      fitHeight(root);
+      return { root, shells: hero.shells, cape: hero.cape };
+    }
     const ink = outlineMaterial(spec.ink);
     const shells: THREE.Object3D[] = [];
     const meshes: THREE.Mesh[] = [];
@@ -58,13 +69,9 @@ export function Avatar({ shadows }: { shadows: boolean }) {
       mesh.frustumCulled = false; // animated: the bind-pose bounds don't follow the pose
       shells.push(attachOutline(mesh, ink));
     }
-    // scale to a consistent height, feet on the ground
-    const box = new THREE.Box3().setFromObject(root);
-    const s = HEIGHT / Math.max(0.01, box.max.y - box.min.y);
-    root.scale.setScalar(s);
-    root.position.y = -box.min.y * s;
-    return { root, shells };
-  }, [gltf.scene, spec.ink, shadows]);
+    fitHeight(root);
+    return { root, shells, cape: null };
+  }, [gltf.scene, spec.ink, shadows, isHero]);
 
   useEffect(() => {
     shells.forEach((s) => (s.visible = outlines));
@@ -72,9 +79,10 @@ export function Avatar({ shadows }: { shadows: boolean }) {
 
   // Animation
   const mixer = useMemo(() => new THREE.AnimationMixer(root), [root]);
+  const clips = useMemo(() => (isHero ? heroClips(gltf.animations) : gltf.animations), [gltf.animations, isHero]);
   const actions = useMemo(() => {
     const map = new Map<Clip, THREE.AnimationAction>();
-    for (const clip of gltf.animations) map.set(clip.name as Clip, mixer.clipAction(clip));
+    for (const clip of clips) map.set(clip.name as Clip, mixer.clipAction(clip));
     for (const name of ["Jump_Start", "Jump_Land", "Interact", "Cheer"] as Clip[]) {
       const a = map.get(name);
       if (a) {
@@ -83,7 +91,7 @@ export function Avatar({ shadows }: { shadows: boolean }) {
       }
     }
     return map;
-  }, [gltf.animations, mixer]);
+  }, [clips, mixer]);
   const state = useRef<{ cur: Clip | null; lock: number; wasAir: boolean }>({ cur: null, lock: 0, wasAir: false });
 
   const play = (name: Clip, fade = 0.18, lockFor = 0) => {
@@ -109,7 +117,7 @@ export function Avatar({ shadows }: { shadows: boolean }) {
 
   useEffect(() => () => void mixer.stopAllAction(), [mixer]);
 
-  useFrame((_, rawDt) => {
+  useFrame(({ clock }, rawDt) => {
     const dt = Math.min(rawDt, 0.05);
     const g = group.current;
     if (!g) return;
@@ -134,9 +142,18 @@ export function Avatar({ shadows }: { shadows: boolean }) {
 
     // match the stride to the ground speed so the feet don't slide
     const run = actions.get("Running_A");
-    if (run) run.timeScale = THREE.MathUtils.clamp(player.speed / 7, 0.8, 1.9);
+    // (the hero's longer legs cover more ground per step)
+    const stride = isHero ? HERO.stride : { run: 7, walk: 2.2 };
+    if (run) run.timeScale = THREE.MathUtils.clamp(player.speed / stride.run, isHero ? 0.55 : 0.8, 1.9);
     const walk = actions.get("Walking_A");
-    if (walk) walk.timeScale = THREE.MathUtils.clamp(player.speed / 2.2, 0.6, 1.6);
+    if (walk) walk.timeScale = THREE.MathUtils.clamp(player.speed / stride.walk, isHero ? 0.45 : 0.6, 1.6);
+
+    // the cape streams out behind with speed and lifts when airborne
+    if (cape) {
+      const target = Math.min(1, player.speed / 8 + (inAir ? 0.5 : 0)) * HERO.capeLift;
+      const flutter = Math.sin(clock.elapsedTime * (3 + player.speed)) * 0.04 * (0.3 + target);
+      cape.rotation.x = THREE.MathUtils.damp(cape.rotation.x, target + flutter, 6, dt);
+    }
 
     mixer.update(dt);
   });
@@ -147,6 +164,14 @@ export function Avatar({ shadows }: { shadows: boolean }) {
       <BlobShadow />
     </group>
   );
+}
+
+/** Scale a character to a consistent height, feet on the ground. */
+function fitHeight(root: THREE.Object3D) {
+  const box = new THREE.Box3().setFromObject(root);
+  const s = HEIGHT / Math.max(0.01, box.max.y - box.min.y);
+  root.scale.setScalar(s);
+  root.position.y = -box.min.y * s;
 }
 
 /** Soft contact shadow under the feet (reads well even when sun shadows are off). */

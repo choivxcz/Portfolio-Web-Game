@@ -355,8 +355,9 @@ const TABS: { id: string; label: string; icon: string; options: Option[] }[] = [
         kind: "choice",
         id: "character",
         label: "Explorer",
-        desc: "Who walks the valley. Both are CC0 adventurers by Kay Lousberg, redrawn with the world's cel shading.",
+        desc: "Who walks the valley: the original Hero, or one of two CC0 adventurers by Kay Lousberg redrawn with the world's cel shading.",
         values: [
+          { v: "hero", label: "Hero" },
           { v: "ranger", label: "Ranger" },
           { v: "mage", label: "Mage" },
         ],

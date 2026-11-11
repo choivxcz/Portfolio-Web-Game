@@ -14,7 +14,7 @@ export interface Prefs {
   minimapRotate: boolean;
   markers: boolean;
   guide: boolean; // controls guide in the corner
-  character: "ranger" | "mage";
+  character: "hero" | "ranger" | "mage";
   outlines: boolean;
   ao: boolean;
   music: boolean;
@@ -33,7 +33,7 @@ export const DEFAULT_PREFS: Prefs = {
   minimapRotate: false,
   markers: true,
   guide: true,
-  character: "ranger",
+  character: "hero",
   outlines: true,
   ao: true,
   music: true,

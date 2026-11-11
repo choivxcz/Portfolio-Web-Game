@@ -1,4 +1,4 @@
-import { BRIDGE, ISLAND, LAKE, LANDMARKS, PATHS, PATH_WIDTH, PLAY_CENTER, PLAY_RADIUS, STREAM, WATER_LEVEL, WORLD_SIZE, type Vec2 } from "./config";
+import { BRIDGE, ENV, ISLAND, LAKE, LANDMARKS, PATHS, PATH_WIDTH, PLAY_CENTER, PLAY_RADIUS, STREAM, WATER_LEVEL, WORLD_SIZE, type Vec2 } from "./config";
 import { createNoise, fbm, lerp, smoothstep } from "./noise";
 import { GROVES, HOUSES, PROPS, WINDMILL, facing } from "./layout";
 
@@ -230,11 +230,11 @@ const lin = (v: number) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 
 const hex = (h: string) => [1, 3, 5].map((i) => lin(parseInt(h.slice(i, i + 2), 16) / 255));
 export const toSrgb = (v: number) => (v <= 0.0031308 ? v * 12.92 : 1.055 * v ** (1 / 2.4) - 0.055);
 
-/* ── Colour palette (sRGB, sampled from in-game references, tuned) ── */
+/* ── Colour palette (sRGB). Ground greens come from ENV.palette in config.ts ── */
 const C = {
-  grassA: hex("#70a346"),
-  grassB: hex("#8db954"),
-  grassDark: hex("#4f8a3d"),
+  grassA: hex(ENV.palette.groundA),
+  grassB: hex(ENV.palette.groundB),
+  grassDark: hex(ENV.palette.groundDark),
   dirt: hex("#b29b72"),
   sand: hex("#e2d3a3"),
   bed: hex("#9f9c74"),

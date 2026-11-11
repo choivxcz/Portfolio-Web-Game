@@ -122,6 +122,93 @@ export const WORLD_SIZE = 560;
 export const PLAY_CENTER: Vec2 = [10, -24];
 export const PLAY_RADIUS = 158;
 
+/**
+ * The environment's look: air, sky, palette, wind and outlines. Every tuning value
+ * for the stylized open-world look lives here. Colours are sRGB hex.
+ */
+export const ENV = {
+  /** Aerial perspective: distant land fades into the sky, warmer toward the sun. */
+  haze: {
+    color: "#c9e2f6", // also the sky's horizon colour, so land meets sky without a seam
+    warm: "#ffe4bf", // haze colour when looking toward the sun
+    warmPower: 5, // how tightly the warm glow hugs the sun's direction
+    start: 45, // metres of clear air in front of the camera
+    far: 1700, // scene fog far plane (haze is at full strength well before this)
+    density: 0.0034, // per metre past `start`
+    max: 0.8, // haze never fully hides the land
+    mistHeight: 4, // valley mist sits below this world height (metres)
+    mistFalloff: 0.16, // how quickly mist thins above `mistHeight`
+    mistDensity: 0.0045, // per metre of distance
+    mistMax: 0.32,
+  },
+  /** Mountain ranges: their own haze, matched to the air above. */
+  mountainHaze: { start: 120, end: 1250, max: 0.86 },
+  sky: {
+    top: "#1d64d8",
+    mid: "#4f9ff0", // the band between zenith and horizon
+    bottom: "#a9cde8",
+    sunHalo: "#fff1d6",
+  },
+  clouds: {
+    crown: "#fffdf7", // sunlit tops
+    mid: "#f4f6fb",
+    edge: "#e4eaf6",
+    shade: [150, 160, 212] as [number, number, number], // cool lavender underside (rgb)
+  },
+  palette: {
+    grassBase: "#2f6b39", // blade roots: deep, slightly blue green
+    grassTip: "#93c95d", // blade tips
+    goldBase: "#9a7a2c", // golden meadow patches
+    goldTip: "#f2d37a",
+    groundA: "#5f9e4a",
+    groundB: "#7db456",
+    groundDark: "#3e7841",
+    treeGreen: { dark: "#24603a", light: "#7cc458" },
+    treeGreenTall: { dark: "#2a6640", light: "#8acf5c" },
+    treeGold: { dark: "#a5681a", light: "#f6c85c" }, // autumn amber, not lemon yellow
+    stoneLow: "#8e8f9f",
+    stoneHigh: "#ddd6c8",
+    stoneWarm: "#d8c6a6",
+    moss: "#6f9a4e",
+  },
+  /** Gusts: bright bands of bent grass rolling across the meadows. */
+  wind: {
+    scale: 0.045, // size of a gust (lower = broader)
+    speed: [0.55, 0.32] as [number, number], // drift direction and speed (metres/s scaled)
+    strength: 0.55, // extra bend inside a gust
+    shine: 0.28, // how much a gust lightens the blades
+  },
+  /** Ink outlines on solid models (rocks, trunks, village props). */
+  outline: { darken: 0.38, tint: "#27345f", tintAmount: 0.35 },
+  post: { bloom: 0.46, bloomThreshold: 0.8 },
+} as const;
+
+/**
+ * The original anime-style hero (scene/hero.ts): colours and how its stride is
+ * matched to ground speed. Colours are sRGB hex.
+ */
+export const HERO = {
+  colors: {
+    skin: "#ffe2d1",
+    hair: "#8f402c", // auburn
+    hairShine: "#c4664a",
+    iris: "#2f9c94", // teal-green
+    irisLight: "#8fe3cf",
+    lash: "#3a2420",
+    jacket: "#1f6c78", // deep teal
+    trim: "#f2e8d2", // cream
+    gold: "#d8a443",
+    under: "#2b2f45", // undersuit and gloves
+    pants: "#30344d",
+    boots: "#6a4530",
+    cape: "#f2e8d2",
+  },
+  /** Ground speed (m/s) at which one animation cycle matches the stride. */
+  stride: { run: 12, walk: 3.8 },
+  /** How far the cape lifts behind when running (radians). */
+  capeLift: 0.55,
+} as const;
+
 export type Quality = "low" | "medium" | "high";
 export interface QualityPreset {
   dpr: [number, number];

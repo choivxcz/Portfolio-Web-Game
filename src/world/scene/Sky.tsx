@@ -2,9 +2,11 @@ import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
 import { rng } from "../../utils/random";
+import { ENV } from "../config";
 
 export const SUN_DIR = new THREE.Vector3(0.55, 0.72, 0.42).normalize();
-export const SKY = { top: "#1f6fe0", horizon: "#b8defa", bottom: "#9fc6e6" };
+/** Sky colours. The horizon is the haze colour, so distant land melts into the sky. */
+export const SKY = { top: ENV.sky.top, mid: ENV.sky.mid, horizon: ENV.haze.color, bottom: ENV.sky.bottom };
 
 function SkyDome() {
   const material = useMemo(
@@ -15,20 +17,33 @@ function SkyDome() {
         toneMapped: false,
         uniforms: {
           uTop: { value: new THREE.Color(SKY.top) },
+          uMid: { value: new THREE.Color(SKY.mid) },
           uHorizon: { value: new THREE.Color(SKY.horizon) },
           uBottom: { value: new THREE.Color(SKY.bottom) },
+          uWarm: { value: new THREE.Color(ENV.haze.warm) },
+          uHalo: { value: new THREE.Color(ENV.sky.sunHalo) },
+          uWarmPower: { value: ENV.haze.warmPower },
           uSun: { value: SUN_DIR },
         },
         vertexShader: `varying vec3 vDir;
 void main(){ vDir = position; vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_Position = p.xyww; }`,
-        fragmentShader: `uniform vec3 uTop; uniform vec3 uHorizon; uniform vec3 uBottom; uniform vec3 uSun; varying vec3 vDir;
+        fragmentShader: `uniform vec3 uTop; uniform vec3 uMid; uniform vec3 uHorizon; uniform vec3 uBottom; uniform vec3 uWarm; uniform vec3 uHalo;
+uniform float uWarmPower; uniform vec3 uSun; varying vec3 vDir;
 void main(){
   vec3 d = normalize(vDir);
   float h = d.y;
-  vec3 col = mix(uHorizon, uTop, pow(clamp(h, 0.0, 1.0), 0.45));
+  // three bands: pale horizon, clear mid-blue, deep zenith
+  float a = clamp(h, 0.0, 1.0);
+  vec3 col = mix(uHorizon, uMid, smoothstep(0.0, 0.32, pow(a, 0.75)));
+  col = mix(col, uTop, smoothstep(0.18, 0.85, a));
+  // the horizon warms toward the sun, matching the haze on the land (atmosphere.ts)
+  vec3 sunFlat = normalize(vec3(uSun.x, 0.0, uSun.z));
+  float toSun = pow(max(dot(normalize(vec3(d.x, 0.0, d.z) + 1e-5), sunFlat), 0.0), uWarmPower);
+  col = mix(col, uWarm, toSun * 0.55 * (1.0 - smoothstep(0.0, 0.3, a)));
   col = mix(col, uBottom, smoothstep(0.0, -0.3, h));
   float s = max(dot(d, uSun), 0.0);
-  col += vec3(1.0, 0.94, 0.8) * (pow(s, 1400.0) * 4.0 + pow(s, 60.0) * 0.32 + pow(s, 6.0) * 0.12);
+  // sun disc, a soft halo and a wide glow
+  col += uHalo * (pow(s, 1400.0) * 4.0 + pow(s, 90.0) * 0.4 + pow(s, 12.0) * 0.16 + pow(s, 3.0) * 0.06);
   gl_FragColor = vec4(col, 1.0);
   #include <colorspace_fragment>
 }`,
@@ -78,10 +93,10 @@ function cloudTexture(seed: number) {
   for (const p of puffs) {
     const g = ctx.createRadialGradient(p.x - p.rad * 0.18, p.y - p.rad * 0.35, p.rad * 0.1, p.x, p.y, p.rad);
     // no dark rim on each puff: the edges fade out pale, and the base shading pass does the volume
-    g.addColorStop(0, "#ffffff");
-    g.addColorStop(0.6, "#f8fafd");
-    g.addColorStop(0.86, "#e9eef7");
-    g.addColorStop(1, "rgba(233,238,247,0)");
+    g.addColorStop(0, ENV.clouds.crown);
+    g.addColorStop(0.6, ENV.clouds.mid);
+    g.addColorStop(0.86, ENV.clouds.edge);
+    g.addColorStop(1, `${ENV.clouds.edge}00`);
     ctx.fillStyle = g;
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.rad, 0, Math.PI * 2);
@@ -91,9 +106,10 @@ function cloudTexture(seed: number) {
   ctx.filter = "none";
   ctx.globalCompositeOperation = "source-atop";
   const shade = ctx.createLinearGradient(0, 120, 0, base + 40);
-  shade.addColorStop(0, "rgba(160,176,214,0)");
-  shade.addColorStop(0.55, "rgba(160,176,214,0.22)");
-  shade.addColorStop(1, "rgba(132,150,198,0.62)");
+  const [sr, sg, sb] = ENV.clouds.shade;
+  shade.addColorStop(0, `rgba(${sr},${sg},${sb},0)`);
+  shade.addColorStop(0.55, `rgba(${sr},${sg},${sb},0.24)`);
+  shade.addColorStop(1, `rgba(${sr - 22},${sg - 18},${sb - 10},0.62)`);
   ctx.fillStyle = shade;
   ctx.fillRect(0, 0, W, H);
   // flatten and soften the base

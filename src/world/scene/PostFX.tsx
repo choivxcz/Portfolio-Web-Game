@@ -2,6 +2,7 @@ import { Bloom, EffectComposer, N8AO, ToneMapping, Vignette } from "@react-three
 import { BlendFunction, Effect, EffectAttribute, ToneMappingMode } from "postprocessing";
 import { useMemo } from "react";
 import * as THREE from "three";
+import { ENV } from "../config";
 
 /**
  * Contrast-adaptive sharpening: boosts each pixel against its four neighbours, but
@@ -78,7 +79,7 @@ export function PostFX({ multisampling, bloom, vignette, sharpen: sharpenOn, ao 
       {/* soft cool-blue contact shading in corners, under eaves and where things meet the ground */}
       {ao && <N8AO aoRadius={2.2} distanceFalloff={0.6} intensity={2.4} color="#25305e" halfRes quality="performance" />}
       {sharpenOn && <primitive object={sharpen} />}
-      {bloom && <Bloom mipmapBlur intensity={0.38} luminanceThreshold={0.86} luminanceSmoothing={0.22} radius={0.72} />}
+      {bloom && <Bloom mipmapBlur intensity={ENV.post.bloom} luminanceThreshold={ENV.post.bloomThreshold} luminanceSmoothing={0.22} radius={0.72} />}
       <ToneMapping mode={ToneMappingMode.NEUTRAL} />
       <primitive object={grade} />
       {vignette && <Vignette offset={0.42} darkness={0.2} />}

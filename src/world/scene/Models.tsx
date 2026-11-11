@@ -2,7 +2,10 @@ import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
+import { ENV } from "../config";
 import type { Placement } from "../scatter";
+import { useWorld } from "../store";
+import { addOutlineNormals, outlineMaterial } from "./outline";
 import { toonRamp } from "./Vegetation";
 import { withRim } from "./toonShading";
 
@@ -39,7 +42,16 @@ interface Part {
   geometry: THREE.BufferGeometry;
   material: THREE.Material;
   depth?: THREE.Material;
+  /** Ink outline shell for solid parts (rocks, trunks, props); none for leaf cards. */
+  outline?: THREE.Material;
   leafy: boolean;
+}
+
+/** Coloured line art: a darkened, cool-shifted version of the surface colour. */
+function outlineFor(m: THREE.MeshToonMaterial) {
+  const o = ENV.outline;
+  const ink = m.color.clone().multiplyScalar(o.darken).lerp(new THREE.Color(o.tint), o.tintAmount);
+  return outlineMaterial(ink);
 }
 
 function toToon(src: THREE.MeshStandardMaterial, foliage: boolean, tint?: string): Part["material"] {
@@ -113,7 +125,10 @@ function useParts(url: string, height: number, tint?: string) {
       }
       const material = toToon(src, false, leafy ? tint : undefined);
       const depth = leafy && src.map ? new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: src.map, alphaTest: 0.45 }) : undefined;
-      parts.push({ geometry: g, material, depth, leafy });
+      const solid = !leafy && (material as THREE.MeshToonMaterial).alphaTest === 0;
+      if (solid) addOutlineNormals(g);
+      const outline = solid ? outlineFor(material as THREE.MeshToonMaterial) : undefined;
+      parts.push({ geometry: g, material, depth, outline, leafy });
     });
     return { parts, scale: height / Math.max(0.001, box.max.y - box.min.y) };
   }, [gltf, height, tint]);
@@ -121,9 +136,12 @@ function useParts(url: string, height: number, tint?: string) {
 
 function InstancedPart({ part, items, scale, shadows }: { part: Part; items: Placement[]; scale: number; shadows: boolean }) {
   const ref = useRef<THREE.InstancedMesh>(null);
+  const shell = useRef<THREE.InstancedMesh>(null);
+  const outlines = useWorld((s) => s.prefs.outlines);
+  const showOutline = outlines && !!part.outline;
   useLayoutEffect(() => {
-    const mesh = ref.current;
-    if (!mesh) return;
+    const meshes = [ref.current, shell.current].filter((x): x is THREE.InstancedMesh => !!x);
+    if (!meshes.length) return;
     const m = new THREE.Matrix4();
     const q = new THREE.Quaternion();
     const up = new THREE.Vector3(0, 1, 0);
@@ -131,13 +149,18 @@ function InstancedPart({ part, items, scale, shadows }: { part: Part; items: Pla
       q.setFromAxisAngle(up, p.ry);
       const s = p.s * scale;
       m.compose(new THREE.Vector3(p.x, p.y, p.z), q, new THREE.Vector3(s, s, s));
-      mesh.setMatrixAt(i, m);
+      for (const mesh of meshes) mesh.setMatrixAt(i, m);
     });
-    mesh.instanceMatrix.needsUpdate = true;
-    mesh.computeBoundingSphere();
-  }, [items, scale]);
+    for (const mesh of meshes) {
+      mesh.instanceMatrix.needsUpdate = true;
+      mesh.computeBoundingSphere();
+    }
+  }, [items, scale, showOutline]);
   return (
-    <instancedMesh ref={ref} args={[part.geometry, part.material, items.length]} castShadow={shadows} receiveShadow={shadows && !part.leafy} customDepthMaterial={part.depth} />
+    <>
+      <instancedMesh ref={ref} args={[part.geometry, part.material, items.length]} castShadow={shadows} receiveShadow={shadows && !part.leafy} customDepthMaterial={part.depth} />
+      {showOutline && <instancedMesh ref={shell} args={[part.geometry, part.outline, items.length]} userData={{ noReflect: true }} />}
+    </>
   );
 }
 

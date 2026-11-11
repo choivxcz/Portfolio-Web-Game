@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import * as THREE from "three";
+import { ENV } from "../config";
 import { createNoise, fbm, ridged, smoothstep } from "../noise";
 import { SKY, SUN_DIR } from "./Sky";
 
@@ -120,7 +121,9 @@ function mountainMaterial(L: Layer) {
     uniforms: {
       uSun: { value: SUN_DIR },
       uSky: { value: new THREE.Color(SKY.horizon) },
-      uHaze: { value: new THREE.Vector2(450, 1900) },
+      uWarm: { value: new THREE.Color(ENV.haze.warm) },
+      uWarmPower: { value: ENV.haze.warmPower },
+      uHaze: { value: new THREE.Vector3(ENV.mountainHaze.start, ENV.mountainHaze.end, ENV.mountainHaze.max) },
       uRock: { value: new THREE.Color(L.rock) },
       uSnow: { value: L.snow - 15 },
     },
@@ -138,7 +141,9 @@ void main(){
     fragmentShader: /* glsl */ `
 uniform vec3 uSun;
 uniform vec3 uSky;
-uniform vec2 uHaze;
+uniform vec3 uWarm;
+uniform float uWarmPower;
+uniform vec3 uHaze; // start, end, max
 uniform vec3 uRock;
 uniform float uSnow;
 varying vec3 vColor;
@@ -203,8 +208,13 @@ void main(){
   // air is thinner higher up: summits stay crisper than the hazy foothills
   haze *= 1.0 - 0.35 * smoothstep(60.0, 380.0, h);
   float valley = 1.0 - smoothstep(-10.0, 150.0, h);
-  haze = clamp(haze * 0.6 + valley * 0.18, 0.0, 0.75);
-  gl_FragColor = vec4(mix(c, uSky, haze), 1.0);
+  haze = clamp(haze * 0.72 + valley * 0.2, 0.0, uHaze.z);
+  // same warm glow toward the sun as the sky and the land's haze
+  vec3 sunFlat = normalize(vec3(uSun.x, 0.0, uSun.z));
+  vec3 dirFlat = normalize(vec3(vW.x - cameraPosition.x, 0.0, vW.z - cameraPosition.z) + 1e-5);
+  float toSun = pow(max(dot(dirFlat, sunFlat), 0.0), uWarmPower);
+  vec3 air = mix(uSky, uWarm, toSun * 0.55);
+  gl_FragColor = vec4(mix(c, air, haze), 1.0);
   #include <colorspace_fragment>
 }`,
   });

@@ -2,6 +2,7 @@ import { useFrame } from "@react-three/fiber";
 import { useMemo } from "react";
 import * as THREE from "three";
 import { rng } from "../../utils/random";
+import { ENV } from "../config";
 import { player } from "../store";
 import { HEIGHT_GLSL, heightUniforms } from "./heightmap";
 
@@ -58,8 +59,13 @@ uniform float uTime;
 uniform float uWind;
 uniform float uPatch;
 uniform vec2 uCenter;
+uniform vec4 uGust; // scale, drift x, drift z, extra bend
 attribute vec2 aOffset;
 attribute vec4 aRand; // rotation, scale, tint, phase
+varying float vGust;
+float ghash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float gnoise(vec2 p){ vec2 i = floor(p); vec2 f = fract(p); f = f*f*(3.0-2.0*f);
+  return mix(mix(ghash(i), ghash(i+vec2(1,0)), f.x), mix(ghash(i+vec2(0,1)), ghash(i+vec2(1,1)), f.x), f.y); }
 varying float vY;
 varying float vTint;
 varying vec2 vWorld;
@@ -82,6 +88,12 @@ void main(){
   p.xz *= 0.6 + 0.6 * s;
   float sway = sin(uTime * 1.6 + world.x * 0.21 + world.y * 0.17 + aRand.w * 6.28) * 0.6 + sin(uTime * 0.7 + world.x * 0.05) * 0.4;
   float bendAmt = position.y * position.y * uWind * s;
+  // gusts: broad bands drifting downwind; inside one the blades lean further over
+  vec2 gp = world * uGust.x - uTime * uGust.yz;
+  float gust = smoothstep(0.55, 0.85, gnoise(gp) * 0.7 + gnoise(gp * 2.3 + 5.1) * 0.3) * step(0.0001, uWind);
+  vGust = gust;
+  vec2 downwind = normalize(uGust.yz + 1e-5);
+  p.xz += downwind * gust * uGust.w * position.y * position.y * s;
   p.x += sway * bendAmt;
   p.z += sway * bendAmt * 0.45;
   vec3 wp = vec3(world.x, field.x, world.y) + p;
@@ -108,6 +120,8 @@ uniform vec3 uBase;
 uniform vec3 uTip;
 uniform vec3 uGoldBase;
 uniform vec3 uGoldTip;
+uniform float uGustShine;
+varying float vGust;
 varying float vY;
 varying float vTint;
 varying vec2 vWorld;
@@ -127,6 +141,8 @@ void main(){
   vec3 col = mix(mix(uBase, uTip, smoothstep(0.0, 1.0, vY)), mix(uGoldBase, uGoldTip, smoothstep(0.0, 1.0, vY)), gm * 0.75);
   col *= 0.9 + vTint * 0.22;
   col *= 0.8 + 0.26 * vY;
+  // a passing gust turns the blades so their pale undersides catch the light
+  col += (col * 0.65 + vec3(0.18, 0.2, 0.1)) * vGust * smoothstep(0.2, 1.0, vY) * uGustShine;
   #endif
   // crisp cel edge on the shadow, tinted the same cool blue as shaded toon surfaces
   float sun = smoothstep(0.3, 0.7, getShadowMask());
@@ -181,10 +197,12 @@ export function VegetationPatch({ heightTex, n, count, patch, flowers = false, w
         uWind: { value: wind },
         uPatch: { value: patch },
         uCenter: { value: new THREE.Vector2() },
-        uBase: { value: new THREE.Color("#44702f") },
-        uTip: { value: new THREE.Color("#a3bd5f") },
-        uGoldBase: { value: new THREE.Color("#8d8436") },
-        uGoldTip: { value: new THREE.Color("#e3cf6a") },
+        uBase: { value: new THREE.Color(ENV.palette.grassBase) },
+        uTip: { value: new THREE.Color(ENV.palette.grassTip) },
+        uGoldBase: { value: new THREE.Color(ENV.palette.goldBase) },
+        uGoldTip: { value: new THREE.Color(ENV.palette.goldTip) },
+        uGust: { value: new THREE.Vector4(ENV.wind.scale, ENV.wind.speed[0], ENV.wind.speed[1], flowers ? ENV.wind.strength * 0.4 : ENV.wind.strength) },
+        uGustShine: { value: ENV.wind.shine },
       },
     });
     return { geometry: g, material: m };
