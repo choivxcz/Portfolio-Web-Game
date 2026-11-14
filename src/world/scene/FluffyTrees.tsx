@@ -7,7 +7,7 @@ import type { Placement } from "../scatter";
 import { wind } from "./Models";
 import { withDetail } from "./structures/detail";
 import { toonRamp } from "./Vegetation";
-import { withRim } from "./toonShading";
+import { withRim, withTranslucency } from "./toonShading";
 
 /**
  * "Fluffy" stylized trees: each canopy is a few overlapping clumps filled with
@@ -204,7 +204,7 @@ transformed.z += cos(uTime * 0.9 + tPos.z * 0.17 + transformed.x * 0.3) * sway *
       .replace("#include <project_vertex>", BILLBOARD);
   };
   m.customProgramCacheKey = () => "fluffy-leaves";
-  return withRim(m);
+  return withTranslucency(withRim(m));
 }
 
 function leafDepthMaterial() {

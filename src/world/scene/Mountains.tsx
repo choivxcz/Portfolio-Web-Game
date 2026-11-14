@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import * as THREE from "three";
 import { ENV } from "../config";
 import { createNoise, fbm, ridged, smoothstep } from "../noise";
+import { LIGHT } from "../lightState";
 import { SKY, SUN_DIR } from "./Sky";
 
 /**
@@ -121,7 +122,8 @@ function mountainMaterial(L: Layer) {
     uniforms: {
       uSun: { value: SUN_DIR },
       uSky: { value: new THREE.Color(SKY.horizon) },
-      uWarm: { value: new THREE.Color(ENV.haze.warm) },
+      uWarm: { value: new THREE.Color(SKY.warm) },
+      uTint: { value: new THREE.Color(LIGHT.p.tint) },
       uWarmPower: { value: ENV.haze.warmPower },
       uHaze: { value: new THREE.Vector3(ENV.mountainHaze.start, ENV.mountainHaze.end, ENV.mountainHaze.max) },
       uRock: { value: new THREE.Color(L.rock) },
@@ -142,6 +144,7 @@ void main(){
 uniform vec3 uSun;
 uniform vec3 uSky;
 uniform vec3 uWarm;
+uniform vec3 uTint;
 uniform float uWarmPower;
 uniform vec3 uHaze; // start, end, max
 uniform vec3 uRock;
@@ -208,6 +211,7 @@ void main(){
   // air is thinner higher up: summits stay crisper than the hazy foothills
   haze *= 1.0 - 0.35 * smoothstep(60.0, 380.0, h);
   float valley = 1.0 - smoothstep(-10.0, 150.0, h);
+  c *= uTint; // time of day
   haze = clamp(haze * 0.72 + valley * 0.2, 0.0, uHaze.z);
   // same warm glow toward the sun as the sky and the land's haze
   vec3 sunFlat = normalize(vec3(uSun.x, 0.0, uSun.z));

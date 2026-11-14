@@ -1,8 +1,9 @@
-import { Bloom, EffectComposer, N8AO, ToneMapping, Vignette } from "@react-three/postprocessing";
+import { Bloom, EffectComposer, GodRays, N8AO, ToneMapping, Vignette } from "@react-three/postprocessing";
 import { BlendFunction, Effect, EffectAttribute, ToneMappingMode } from "postprocessing";
 import { useMemo } from "react";
 import * as THREE from "three";
 import { ENV } from "../config";
+import { LIGHT } from "../lightState";
 
 /**
  * Contrast-adaptive sharpening: boosts each pixel against its four neighbours, but
@@ -66,11 +67,14 @@ interface PostFXProps {
   vignette: boolean;
   sharpen: boolean;
   ao: boolean;
+  /** Sun disc to trace light shafts from (null = no shafts). */
+  shafts: THREE.Mesh | null;
 }
 
-export function PostFX({ multisampling, bloom, vignette, sharpen: sharpenOn, ao }: PostFXProps) {
+export function PostFX({ multisampling, bloom, vignette, sharpen: sharpenOn, ao, shafts }: PostFXProps) {
   // fresh effect objects for each chain: the old composer disposes the ones it held
-  const chain = `${bloom}${vignette}${sharpenOn}${ao}`;
+  const chain = `${bloom}${vignette}${sharpenOn}${ao}${!!shafts}`;
+  const s = LIGHT.p.shafts;
   const sharpen = useMemo(() => new SharpenEffect(0.55), [chain]);
   const grade = useMemo(() => new AnimeGradeEffect(), [chain]);
   return (
@@ -79,7 +83,9 @@ export function PostFX({ multisampling, bloom, vignette, sharpen: sharpenOn, ao 
       {/* soft cool-blue contact shading in corners, under eaves and where things meet the ground */}
       {ao && <N8AO aoRadius={2.2} distanceFalloff={0.6} intensity={2.4} color="#25305e" halfRes quality="performance" />}
       {sharpenOn && <primitive object={sharpen} />}
-      {bloom && <Bloom mipmapBlur intensity={ENV.post.bloom} luminanceThreshold={ENV.post.bloomThreshold} luminanceSmoothing={0.22} radius={0.72} />}
+      {/* light shafts through the trees when the sun is low */}
+      {shafts && <GodRays sun={shafts} samples={48} density={0.95} decay={0.93} weight={0.32 * s} exposure={0.42} clampMax={1} blur />}
+      {bloom && <Bloom mipmapBlur intensity={LIGHT.p.bloom} luminanceThreshold={ENV.post.bloomThreshold} luminanceSmoothing={0.22} radius={0.72} />}
       <ToneMapping mode={ToneMappingMode.NEUTRAL} />
       <primitive object={grade} />
       {vignette && <Vignette offset={0.42} darkness={0.2} />}

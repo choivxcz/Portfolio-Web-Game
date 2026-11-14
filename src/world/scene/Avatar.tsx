@@ -5,7 +5,7 @@ import * as THREE from "three";
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { player, useWorld, worldStore } from "../store";
 import { HERO } from "../config";
-import { buildHero, heroClips } from "./hero";
+import { buildHero, heroClips, tuckArms } from "./hero";
 import { attachOutline, outlineMaterial } from "./outline";
 import { withRim } from "./toonShading";
 
@@ -34,13 +34,13 @@ export function Avatar({ shadows }: { shadows: boolean }) {
   const group = useRef<THREE.Group>(null);
 
   // Toon materials + outline shells on a private copy of the model
-  const { root, shells, cape } = useMemo(() => {
+  const { root, shells, cape, arms } = useMemo(() => {
     const root = cloneSkinned(gltf.scene);
     if (isHero) {
       const hero = buildHero(root, shadows);
       root.traverse((o) => (o.frustumCulled = false)); // animated: the rest-pose bounds don't follow the pose
       fitHeight(root);
-      return { root, shells: hero.shells, cape: hero.cape };
+      return { root, shells: hero.shells, cape: hero.cape, arms: hero.arms };
     }
     const ink = outlineMaterial(spec.ink);
     const shells: THREE.Object3D[] = [];
@@ -70,7 +70,7 @@ export function Avatar({ shadows }: { shadows: boolean }) {
       shells.push(attachOutline(mesh, ink));
     }
     fitHeight(root);
-    return { root, shells, cape: null };
+    return { root, shells, cape: null, arms: [] as THREE.Object3D[] };
   }, [gltf.scene, spec.ink, shadows, isHero]);
 
   useEffect(() => {
@@ -156,6 +156,7 @@ export function Avatar({ shadows }: { shadows: boolean }) {
     }
 
     mixer.update(dt);
+    if (arms.length) tuckArms(arms, HERO.armsIn);
   });
 
   return (

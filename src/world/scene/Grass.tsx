@@ -3,8 +3,10 @@ import { useMemo } from "react";
 import * as THREE from "three";
 import { rng } from "../../utils/random";
 import { ENV } from "../config";
+import { LIGHT } from "../lightState";
 import { player } from "../store";
 import { HEIGHT_GLSL, heightUniforms } from "./heightmap";
+import { SUN_DIR } from "./Sky";
 
 /** A clump of three tapered, slightly curved blades (unit height). */
 function bladeClump(): THREE.BufferGeometry {
@@ -18,7 +20,7 @@ function bladeClump(): THREE.BufferGeometry {
     const base = pos.length / 3;
     for (let s = 0; s <= seg; s++) {
       const y = s / seg;
-      const w = 0.03 * (1 - y) ** 0.75;
+      const w = 0.035 * (1 - y) ** 0.75;
       const bend = y * y * 0.18;
       const dx = Math.cos(a) * bend;
       const dz = Math.sin(a) * bend;
@@ -36,12 +38,18 @@ function bladeClump(): THREE.BufferGeometry {
   return g;
 }
 
-/** A stem with two crossed petal quads on top. */
+/**
+ * A flower: two crossed stem cards and a flat, slightly tilted head. The fragment
+ * shader cuts the head into five rounded petals around a golden centre.
+ */
+export const FLOWER_HEAD_Y = 0.34;
 function flowerHead(): THREE.BufferGeometry {
+  const h = FLOWER_HEAD_Y;
+  const s = 0.14; // half-size of the head
   const pos = [
-    -0.012, 0, 0, 0.012, 0, 0, -0.012, 0.32, 0, 0.012, 0.32, 0, // stem
-    -0.09, 0.3, -0.09, 0.09, 0.3, 0.09, -0.09, 0.42, -0.09, 0.09, 0.42, 0.09,
-    -0.09, 0.3, 0.09, 0.09, 0.3, -0.09, -0.09, 0.42, 0.09, 0.09, 0.42, -0.09,
+    -0.012, 0, 0, 0.012, 0, 0, -0.012, h, 0, 0.012, h, 0, // stem
+    0, 0, -0.012, 0, 0, 0.012, 0, h, -0.012, 0, h, 0.012,
+    -s, h - 0.03, -s, s, h + 0.03, -s, -s, h - 0.03, s, s, h + 0.03, s, // head, tilted a little
   ];
   const idx = [0, 1, 2, 1, 3, 2, 4, 5, 6, 5, 7, 6, 8, 9, 10, 9, 11, 10];
   const g = new THREE.BufferGeometry();
@@ -69,6 +77,9 @@ float gnoise(vec2 p){ vec2 i = floor(p); vec2 f = fract(p); f = f*f*(3.0-2.0*f);
 varying float vY;
 varying float vTint;
 varying vec2 vWorld;
+varying vec3 vLocal;
+varying float vBack;
+uniform vec3 uSun;
 void main(){
   vec2 rel = mod(aOffset * uPatch - uCenter + uPatch * 0.5, uPatch) - uPatch * 0.5;
   vec2 world = uCenter + rel;
@@ -100,6 +111,11 @@ void main(){
   vY = position.y;
   vTint = aRand.z;
   vWorld = world;
+  vLocal = position;
+  // looking toward the sun through the blades: their tips glow
+  vec3 toFrag = normalize(wp - cameraPosition);
+  float back = max(dot(toFrag, normalize(uSun)), 0.0);
+  vBack = back * back * back;
   vec4 mvPosition = viewMatrix * vec4(wp, 1.0);
   gl_Position = projectionMatrix * mvPosition;
   // sun shadows from trees and buildings fall across the blades
@@ -116,11 +132,14 @@ const FRAG = /* glsl */ `
 #include <shadowmask_pars_fragment>
 #include <fog_pars_fragment>
 uniform vec3 uShade;
+varying vec3 vLocal;
+varying float vBack;
 uniform vec3 uBase;
 uniform vec3 uTip;
 uniform vec3 uGoldBase;
 uniform vec3 uGoldTip;
 uniform float uGustShine;
+uniform vec3 uTint; // time of day
 varying float vGust;
 varying float vY;
 varying float vTint;
@@ -130,23 +149,44 @@ float vnoise(vec2 p){ vec2 i = floor(p); vec2 f = fract(p); f = f*f*(3.0-2.0*f);
   return mix(mix(hash2(i), hash2(i+vec2(1,0)), f.x), mix(hash2(i+vec2(0,1)), hash2(i+vec2(1,1)), f.x), f.y); }
 void main(){
   #ifdef FLOWER
-  vec3 petals[4];
-  petals[0] = vec3(1.0, 0.98, 0.92);
-  petals[1] = vec3(1.0, 0.85, 0.3);
-  petals[2] = vec3(0.98, 0.62, 0.72);
-  petals[3] = vec3(0.62, 0.78, 1.0);
-  vec3 col = vY > 0.7 ? petals[int(vTint * 3.99)] : vec3(0.3, 0.55, 0.22);
+  vec3 petals[6];
+  petals[0] = vec3(1.0, 0.98, 0.93);  // white
+  petals[1] = vec3(1.0, 0.84, 0.32);  // buttercup
+  petals[2] = vec3(0.98, 0.6, 0.72);  // pink
+  petals[3] = vec3(0.6, 0.76, 1.0);   // sky blue
+  petals[4] = vec3(0.78, 0.62, 0.98); // lilac
+  petals[5] = vec3(1.0, 0.62, 0.45);  // coral
+  vec3 col;
+  if (vY > ${(0.34 - 0.04).toFixed(2)} && abs(vLocal.x) + abs(vLocal.z) > 0.02) {
+    // five rounded petals around a golden centre
+    vec2 q = vLocal.xz / 0.14;
+    float r = length(q);
+    float ang = atan(q.y, q.x) + vTint * 6.28;
+    float edge = 0.6 + 0.4 * abs(cos(ang * 2.5));
+    if (r > edge) discard;
+    vec3 petal = petals[int(vTint * 5.99)];
+    col = mix(petal * 0.82, petal, smoothstep(0.2, 0.8, r / edge));
+    col = mix(vec3(1.0, 0.72, 0.18), col, smoothstep(0.16, 0.24, r));
+  } else {
+    col = mix(vec3(0.2, 0.42, 0.16), vec3(0.36, 0.62, 0.26), vY / 0.34);
+  }
   #else
   float gm = smoothstep(0.6, 0.8, vnoise(vWorld * 0.018) * 0.7 + vnoise(vWorld * 0.061) * 0.3);
   vec3 col = mix(mix(uBase, uTip, smoothstep(0.0, 1.0, vY)), mix(uGoldBase, uGoldTip, smoothstep(0.0, 1.0, vY)), gm * 0.75);
   col *= 0.9 + vTint * 0.22;
   col *= 0.8 + 0.26 * vY;
+  // broad patches of fresher yellow-green and cooler blue-green across the meadow
+  float hueN = vnoise(vWorld * 0.03 + 11.0) * 0.65 + vnoise(vWorld * 0.09) * 0.35;
+  col *= mix(vec3(0.9, 1.0, 1.06), vec3(1.1, 1.06, 0.84), smoothstep(0.25, 0.75, hueN));
   // a passing gust turns the blades so their pale undersides catch the light
   col += (col * 0.65 + vec3(0.18, 0.2, 0.1)) * vGust * smoothstep(0.2, 1.0, vY) * uGustShine;
   #endif
   // crisp cel edge on the shadow, tinted the same cool blue as shaded toon surfaces
   float sun = smoothstep(0.3, 0.7, getShadowMask());
   col *= mix(uShade, vec3(1.03, 1.01, 0.97), sun);
+  // back-lit tips glow warm where the sun reaches them
+  col += col * vec3(0.55, 0.5, 0.12) * vBack * smoothstep(0.3, 1.0, vY) * sun;
+  col *= uTint;
   gl_FragColor = vec4(col, 1.0);
   #include <colorspace_fragment>
   #include <fog_fragment>
@@ -174,7 +214,7 @@ export function VegetationPatch({ heightTex, n, count, patch, flowers = false, w
       offsets[i * 2] = r();
       offsets[i * 2 + 1] = r();
       rand[i * 4] = r() * Math.PI * 2;
-      rand[i * 4 + 1] = flowers ? 0.8 + r() * 0.5 : 0.24 + r() * 0.36;
+      rand[i * 4 + 1] = flowers ? 0.8 + r() * 0.5 : 0.3 + r() * 0.45;
       rand[i * 4 + 2] = r();
       rand[i * 4 + 3] = r();
     }
@@ -203,6 +243,8 @@ export function VegetationPatch({ heightTex, n, count, patch, flowers = false, w
         uGoldTip: { value: new THREE.Color(ENV.palette.goldTip) },
         uGust: { value: new THREE.Vector4(ENV.wind.scale, ENV.wind.speed[0], ENV.wind.speed[1], flowers ? ENV.wind.strength * 0.4 : ENV.wind.strength) },
         uGustShine: { value: ENV.wind.shine },
+        uTint: { value: new THREE.Color(LIGHT.p.tint) },
+        uSun: { value: SUN_DIR },
       },
     });
     return { geometry: g, material: m };

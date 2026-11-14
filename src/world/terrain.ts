@@ -1,4 +1,4 @@
-import { BRIDGE, ENV, ISLAND, LAKE, LANDMARKS, PATHS, PATH_WIDTH, PLAY_CENTER, PLAY_RADIUS, STREAM, WATER_LEVEL, WORLD_SIZE, type Vec2 } from "./config";
+import { BRIDGE, ENV, ISLAND, LANDMARKS, lakeAmount, PATHS, PATH_WIDTH, PLAY_CENTER, PLAY_RADIUS, STREAM, WATER_LEVEL, WORLD_SIZE, type Vec2 } from "./config";
 import { createNoise, fbm, lerp, smoothstep } from "./noise";
 import { GROVES, HOUSES, PROPS, WINDMILL, facing } from "./layout";
 
@@ -126,8 +126,8 @@ export function sample(x: number, z: number, pads = true): Sample {
     h += mountain * (8 + (fbm(nD, x * 0.006, z * 0.006, 4) * 0.5 + 0.5) * 24);
   }
 
-  const dl = Math.hypot(x - LAKE.x, z - LAKE.z);
-  const lake = 1 - smoothstep(LAKE.r * 0.72, LAKE.r * 1.1, dl);
+  // the main basin and its lobes (config.ts), one body of water
+  const lake = lakeAmount(x, z);
   h = lerp(h, -4.6, lake);
   const di = Math.hypot(x - ISLAND.x, z - ISLAND.z);
   h = lerp(h, ISLAND.h, 1 - smoothstep(ISLAND.r * 0.82, ISLAND.r * 1.08, di));
@@ -292,11 +292,14 @@ export function buildTerrainData(segments: number): TerrainData {
       c = mix3(c, C.grassDark, smoothstep(0.55, 0.9, fbm(nE, x * 0.012, z * 0.012, 2) * 0.5 + 0.5) * 0.25);
       c = mix3(c, C.dirt, smoothstep(0.35, 0.8, paths[k]));
       // bare rock on steep ground, but never on a path (paths in cuttings stay dirt)
-      const rockT = Math.max(smoothstep(0.85, 1.35, slope), cliffs[k] * smoothstep(0.45, 0.8, slope)) * (1 - smoothstep(0.2, 0.6, paths[k]));
+      // lake banks are grassy slopes down to a sandy beach, never bare grey rock
+      const bank = smoothstep(0.0, 0.2, lakeAmount(x, z));
+      const rockT = Math.max(smoothstep(0.85, 1.35, slope), cliffs[k] * smoothstep(0.45, 0.8, slope)) * (1 - smoothstep(0.2, 0.6, paths[k])) * (1 - bank);
       c = mix3(c, mix3(C.cliff, C.cliffDark, tint), rockT);
       // plateau tops stay green; only the highest summits turn to bare rock
       c = mix3(c, mix3(C.cliff, C.cliffDark, 0.4), smoothstep(46, 72, h) * smoothstep(0.2, 0.6, mountains[k]) * 0.85);
-      const shore = 1 - smoothstep(0.4, 1.6, h);
+      // a wider sandy beach along the lake, a narrow one along the stream
+      const shore = 1 - smoothstep(0.4, lerp(1.6, 2.8, bank), h);
       c = mix3(c, C.sand, shore * (1 - rockT * 0.6));
       if (h < 0) c = mix3(C.sand, C.bed, smoothstep(0, -3.5, h));
       const town = 1 - smoothstep(ISLAND.r * 0.7, ISLAND.r * 0.85, Math.hypot(x - ISLAND.x, z - ISLAND.z));
@@ -309,7 +312,8 @@ export function buildTerrainData(segments: number): TerrainData {
       g *= 1 - smoothstep(0.8, 1.15, slope);
       g *= 1 - cliffs[k] * smoothstep(0.3, 0.6, slope);
       g *= 1 - smoothstep(0.35, 0.7, mountains[k]);
-      g *= 1 - waters[k] * 0.9;
+      // no grass in the water, but it grows down the lake banks to the beach
+      g *= 1 - waters[k] * 0.9 * (1 - smoothstep(2.4, 4.0, h));
       for (const L of LANDMARKS) {
         const d = Math.hypot(x - L.pos[0], z - L.pos[1]);
         g *= smoothstep(L.pad * 0.45, L.pad * 0.8, d);

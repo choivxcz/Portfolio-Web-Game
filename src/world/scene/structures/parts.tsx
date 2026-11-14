@@ -27,6 +27,8 @@ export const MAT = {
   glow: new THREE.MeshBasicMaterial({ color: "#ffe39a", toneMapped: false }),
   crystal: new THREE.MeshBasicMaterial({ color: "#8eeaff", toneMapped: false }),
   rose: new THREE.MeshToonMaterial({ color: "#a4524a", gradientMap: toonRamp }),
+  moss: toon("#6f9a4e"),
+  rock: withDetail(toon("#a3a1ac"), "rock"),
 };
 
 /* ── Modelled parts ── */

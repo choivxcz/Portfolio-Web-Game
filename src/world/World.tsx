@@ -1,6 +1,11 @@
 import { PerformanceMonitor } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { LIGHT, applyTimeOfDay, resolveTime } from "./lighting";
+import { EmissiveTune, LanternGlow } from "./scene/NightLights";
+import { Wildlife } from "./scene/Wildlife";
+import { FountainClock } from "./scene/structures/Fountain";
+import { WaterSounds } from "./scene/WaterSounds";
 import * as THREE from "three";
 import { ENV, QUALITY, type Quality } from "./config";
 import { structureColliders } from "./layout";
@@ -23,10 +28,12 @@ import { SKY, SUN_DIR, Sky } from "./scene/Sky";
 import { Landmarks } from "./scene/structures/Landmarks";
 import { StaticBatch } from "./scene/StaticBatch";
 import { LakeTown } from "./scene/structures/LakeTown";
+import { Ornaments } from "./scene/structures/Ornaments";
+import { ornamentColliders } from "./ornaments";
 import { Village } from "./scene/structures/Village";
 import { Terrain } from "./scene/Terrain";
 import { Water } from "./scene/Water";
-import { Waterfall } from "./scene/Waterfall";
+import { Waterfall, nearWaterfall } from "./scene/Waterfall";
 import { player, useWorld, worldStore } from "./store";
 import { buildTerrainData, minimapImage, type TerrainData } from "./terrain";
 
@@ -59,12 +66,13 @@ function useWorldBuild(quality: Quality): Built | null {
       worldStore.set({ minimap: minimapImage(terrain) });
       step(0.6, "Growing the forests");
       await nextFrame();
-      const trees = [...scatterTrees(terrain, q.trees).filter((t) => !insideMesa(t.x, t.z)), ...mesaTrees()];
-      const rocks = scatterRocks(terrain, q.rocks);
+      // nothing scattered in the waterfall's path
+      const trees = [...scatterTrees(terrain, q.trees).filter((t) => !insideMesa(t.x, t.z) && !nearWaterfall(t.x, t.z)), ...mesaTrees()];
+      const rocks = scatterRocks(terrain, q.rocks).filter((r) => !nearWaterfall(r.x, r.z));
       const plants = scatterPlants(terrain, trees, q.trees / 200);
       step(0.75, "Raising the ruins");
       await nextFrame();
-      const colliders = [...structureColliders(), ...collidersFor(trees, rocks, plants.bushes)];
+      const colliders = [...structureColliders(), ...ornamentColliders(), ...collidersFor(trees, rocks, plants.bushes)];
       const heightTex = createHeightTexture(terrain);
       if (cancelled) return;
       step(0.88, "Lighting the sky");
@@ -108,10 +116,30 @@ function Sun({ shadows }: { shadows: number }) {
     l.position.set(sx + SUN_DIR.x * 200, player.y + SUN_DIR.y * 200, sz + SUN_DIR.z * 200);
     l.target.position.set(sx, player.y, sz);
   });
-  return <directionalLight ref={light} color="#ffeccc" intensity={3.1} castShadow={shadows > 0} />;
+  return <directionalLight ref={light} color={LIGHT.p.sunColor} intensity={LIGHT.p.sunIntensity} castShadow={shadows > 0} />;
 }
 
-/** Tiny pollen motes drifting around the explorer. */
+/**
+ * A bright disc far along the sun's direction, following the camera: the source the
+ * light-shaft effect traces rays from (it sits on the sky's own sun disc).
+ */
+function ShaftSource({ onReady }: { onReady: (m: THREE.Mesh) => void }) {
+  const ref = useRef<THREE.Mesh>(null);
+  useEffect(() => {
+    if (ref.current) onReady(ref.current);
+  }, [onReady]);
+  useFrame(({ camera }) => {
+    ref.current?.position.copy(camera.position).addScaledVector(SUN_DIR, 1100);
+  });
+  return (
+    <mesh ref={ref} frustumCulled={false} userData={{ noReflect: true }}>
+      <sphereGeometry args={[28, 24, 12]} />
+      <meshBasicMaterial color={LIGHT.p.sky.halo} fog={false} toneMapped={false} transparent opacity={0.9} depthWrite={false} />
+    </mesh>
+  );
+}
+
+/** Tiny pollen motes drifting around the explorer (fireflies at night). */
 function Pollen({ animate }: { animate: boolean }) {
   const ref = useRef<THREE.Points>(null);
   const geometry = useMemo(() => {
@@ -132,7 +160,11 @@ function Pollen({ animate }: { animate: boolean }) {
   });
   return (
     <points ref={ref} geometry={geometry} userData={{ noReflect: true }}>
-      <pointsMaterial color="#fff6c8" size={0.14} transparent opacity={0.75} depthWrite={false} />
+      {LIGHT.p.lanterns > 0.5 ? (
+        <pointsMaterial color="#e6ff9a" size={0.2} transparent opacity={0.9} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
+      ) : (
+        <pointsMaterial color="#fff6c8" size={0.14} transparent opacity={0.75} depthWrite={false} />
+      )}
     </points>
   );
 }
@@ -175,10 +207,16 @@ export default function World() {
   useEffect(() => setDpr(q.dpr[1]), [q.dpr]);
   const animate = !reduced;
   const post = quality !== "low";
+  // the lighting is read as the scene builds, so it is applied before the canvas mounts,
+  // and a change remounts the canvas (the built terrain is kept)
+  const time = resolveTime(prefs.timeOfDay);
+  useMemo(() => applyTimeOfDay(time), [time]);
+  const [shaftSun, setShaftSun] = useState<THREE.Mesh | null>(null);
+  const shafts = post && LIGHT.p.shafts > 0;
 
   return (
     <Canvas
-      key={quality}
+      key={`${quality}-${time}`}
       className="world-canvas"
       dpr={THREE.MathUtils.clamp(window.devicePixelRatio, q.dpr[0], dpr) * prefs.renderScale}
       shadows={q.shadows > 0 ? "percentage" : false}
@@ -194,8 +232,9 @@ export default function World() {
       {/* aerial perspective: see scene/atmosphere.ts for how this fog is drawn */}
       <fog attach="fog" args={[SKY.horizon, ENV.haze.start, ENV.haze.far]} />
       {/* cool sky fill: everything out of the sun picks up a soft blue cast */}
-      <hemisphereLight args={["#b9cdff", "#9aa874", 1.0]} />
-      <ambientLight color="#dde6ff" intensity={0.12} />
+      <hemisphereLight args={LIGHT.p.hemi} />
+      <ambientLight color={LIGHT.p.ambient[0]} intensity={LIGHT.p.ambient[1]} />
+      {shafts && <ShaftSource onReady={setShaftSun} />}
       <Sun shadows={q.shadows} />
       <Sky clouds={quality === "low" ? 16 : 26} animate={animate} />
       <Mountains />
@@ -205,7 +244,7 @@ export default function World() {
           <Cliffs shadows={q.shadows > 0} />
           <Water heightTex={built.heightTex} n={built.terrain.n} reflect={quality === "high"} />
           <Waterfall animate={animate} />
-          <VegetationPatch heightTex={built.heightTex} n={built.terrain.n} count={q.grass} patch={quality === "low" ? 54 : 74} wind={animate ? 0.22 : 0} />
+          <VegetationPatch heightTex={built.heightTex} n={built.terrain.n} count={q.grass} patch={quality === "low" ? 54 : quality === "high" ? 92 : 80} wind={animate ? 0.22 : 0} />
           <VegetationPatch heightTex={built.heightTex} n={built.terrain.n} count={q.flowers} patch={90} flowers wind={animate ? 0.08 : 0} />
           <WindClock animate={animate} />
           <FluffyTrees items={built.trees} shadows={q.shadows > 0} />
@@ -213,17 +252,32 @@ export default function World() {
             <Landmarks lights={quality !== "low"} />
             <Village />
             <LakeTown />
+            <Ornaments />
           </StaticBatch>
           {prefs.markers && <Markers />}
           <Explorer colliders={built.colliders} />
           {animate && <Pollen animate={animate} />}
+          <LanternGlow />
+          <Wildlife animate={animate} />
+          <FountainClock animate={animate} />
+          <WaterSounds />
           <Suspense fallback={<ModelProgress />}>
             <GltfPines items={built.trees} shadows={q.shadows > 0} />
             <GltfRocks items={built.rocks} shadows={q.shadows > 0} />
             <Undergrowth plants={built.plants} shadows={q.shadows > 0} />
             <TownProps shadows={q.shadows > 0} />
             <Avatar shadows={q.shadows > 0} />
-            {post && <PostFX multisampling={q.msaa} bloom={prefs.bloom} vignette={prefs.vignette} sharpen={prefs.sharpen} ao={prefs.ao} />}
+            {post && (
+              <PostFX
+                multisampling={q.msaa}
+                bloom={prefs.bloom}
+                vignette={prefs.vignette}
+                sharpen={prefs.sharpen}
+                ao={prefs.ao}
+                shafts={shafts ? shaftSun : null}
+              />
+            )}
+            <EmissiveTune />
             <ReadySignal />
           </Suspense>
         </>

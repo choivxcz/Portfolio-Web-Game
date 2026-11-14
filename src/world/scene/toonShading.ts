@@ -13,6 +13,7 @@ import * as THREE from "three";
  * Per-material knobs (material.defines):
  *   TOON_SOFTNESS  width of the terminator in N·L units (default 0.045; terrain uses wider)
  *   TOON_RIM       enable the rim glow
+ *   TOON_TRANSLUCENT  leaves: sunlight glows through when the camera looks toward the sun
  */
 
 /** Colour of the shaded side, multiplied by the sun colour. */
@@ -67,6 +68,16 @@ const RIM = /* glsl */ `
 	outgoingLight += diffuseColor.rgb * directionalLights[ 0 ].color * toonRim * toonSun * 0.16;
 }
 #endif
+#if defined( TOON_TRANSLUCENT ) && NUM_DIR_LIGHTS > 0
+{
+	// light passing through thin leaves: strongest looking straight into the sun,
+	// tinted warm-yellow like sunlit foliage
+	vec3 toonView = normalize( vViewPosition );
+	float toonBack = clamp( dot( toonView, -directionalLights[ 0 ].direction ) * -1.0, 0.0, 1.0 );
+	toonBack = toonBack * toonBack * toonBack;
+	outgoingLight += diffuseColor.rgb * vec3( 1.15, 1.1, 0.6 ) * directionalLights[ 0 ].color * toonBack * 0.32;
+}
+#endif
 `;
 
 function patch() {
@@ -97,6 +108,12 @@ function patch() {
 }
 
 patch();
+
+/** Let sunlight glow through a toon material when it is back-lit (thin leaves). */
+export function withTranslucency<T extends THREE.Material>(m: T): T {
+  m.defines = { ...(m.defines ?? {}), TOON_TRANSLUCENT: "" };
+  return m;
+}
 
 /** Turn on the sunlit rim glow for a toon material. */
 export function withRim<T extends THREE.Material>(m: T): T {

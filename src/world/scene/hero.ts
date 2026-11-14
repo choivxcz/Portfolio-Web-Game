@@ -93,6 +93,9 @@ function limb(len: number, r0: number, r1: number) {
 }
 
 const HEAD_R = 0.115;
+/** Half cape: where it wraps around the body (lathe angle; 0 = front, PI/2 = left side). */
+const CAPE_FROM = Math.PI * 0.56;
+const CAPE_SPAN = Math.PI * 0.55;
 
 /** Anime head shape: a rounded cranium narrowing to a small, pointed chin. */
 function shapeHead(g: THREE.BufferGeometry) {
@@ -165,8 +168,8 @@ function faceTexture() {
   const x = c.getContext("2d")!;
   const col = HERO.colors;
   const eye = (cx: number, cy: number, dir: 1 | -1) => {
-    const w = 46;
-    const h = 40;
+    const w = 58;
+    const h = 52;
     // sclera
     x.save();
     x.beginPath();
@@ -181,50 +184,50 @@ function faceTexture() {
     g.addColorStop(1, col.irisLight);
     x.fillStyle = g;
     x.beginPath();
-    x.ellipse(cx + dir * 2, cy + 4, 27, 35, 0, 0, Math.PI * 2);
+    x.ellipse(cx + dir * 2, cy + 6, 36, 46, 0, 0, Math.PI * 2);
     x.fill();
-    x.fillStyle = "rgba(20,24,30,0.85)";
+    x.fillStyle = "rgba(16,20,26,0.9)";
     x.beginPath();
-    x.ellipse(cx + dir * 2, cy + 6, 11, 16, 0, 0, Math.PI * 2);
+    x.ellipse(cx + dir * 2, cy + 8, 14, 21, 0, 0, Math.PI * 2);
     x.fill();
     // highlights
     x.fillStyle = "#ffffff";
     x.beginPath();
-    x.ellipse(cx - dir * 9, cy - 10, 8, 10, 0, 0, Math.PI * 2);
+    x.ellipse(cx - dir * 11, cy - 12, 10, 13, 0, 0, Math.PI * 2);
     x.fill();
     x.beginPath();
-    x.ellipse(cx + dir * 12, cy + 18, 4, 4, 0, 0, Math.PI * 2);
+    x.ellipse(cx + dir * 15, cy + 24, 5, 5, 0, 0, Math.PI * 2);
     x.fill();
     // shadow of the upper lid across the top of the eye
     x.fillStyle = "rgba(60,40,60,0.28)";
-    x.fillRect(cx - w, cy - h, w * 2, 16);
+    x.fillRect(cx - w, cy - h, w * 2, 20);
     x.restore();
     // upper lash line, thick with a flick at the outer corner
     x.strokeStyle = col.lash;
     x.lineCap = "round";
-    x.lineWidth = 9;
+    x.lineWidth = 13;
     x.beginPath();
-    x.moveTo(cx - dir * 48, cy - 6);
-    x.quadraticCurveTo(cx, cy - 52, cx + dir * 50, cy - 16);
-    x.lineTo(cx + dir * 60, cy - 6);
+    x.moveTo(cx - dir * 58, cy - 4);
+    x.quadraticCurveTo(cx, cy - 66, cx + dir * 62, cy - 18);
+    x.lineTo(cx + dir * 74, cy - 4);
     x.stroke();
     // lower lash: a short, thin line under the outer half
     x.lineWidth = 3;
     x.beginPath();
-    x.moveTo(cx + dir * 8, cy + 40);
-    x.quadraticCurveTo(cx + dir * 30, cy + 38, cx + dir * 42, cy + 24);
+    x.moveTo(cx + dir * 10, cy + 52);
+    x.quadraticCurveTo(cx + dir * 38, cy + 50, cx + dir * 52, cy + 30);
     x.stroke();
     // brow
     x.lineWidth = 6;
     x.strokeStyle = col.hair;
     x.beginPath();
-    x.moveTo(cx - dir * 34, cy - 70);
-    x.quadraticCurveTo(cx + dir * 4, cy - 86, cx + dir * 44, cy - 74);
+    x.moveTo(cx - dir * 40, cy - 84);
+    x.quadraticCurveTo(cx + dir * 4, cy - 102, cx + dir * 52, cy - 88);
     x.stroke();
   };
   // character's right eye is on the viewer's left
-  eye(160, 195, -1);
-  eye(352, 195, 1);
+  eye(156, 200, -1);
+  eye(356, 200, 1);
   // blush
   for (const bx of [150, 362]) {
     const g = x.createRadialGradient(bx, 268, 0, bx, 268, 46);
@@ -264,8 +267,25 @@ function ink(color: string) {
 export interface Hero {
   /** Outline shells, toggled by the "Character Outlines" setting. */
   shells: THREE.Object3D[];
+  /** Upper arms [left, right]: the rig's poses hold them wide for a chibi body. */
+  arms: THREE.Object3D[];
   /** Pivot of the half cape: rotate on x to lift it behind the hero. */
   cape: THREE.Object3D | null;
+}
+
+const IN_L = new THREE.Quaternion();
+const IN_R = new THREE.Quaternion();
+const Z = new THREE.Vector3(0, 0, 1);
+/**
+ * Bring the upper arms in toward the body after the animation has posed them
+ * (call after the mixer updates). Rotates in the chest's frame, about its forward axis.
+ */
+export function tuckArms(arms: THREE.Object3D[], angle: number) {
+  if (arms.length < 2) return;
+  IN_L.setFromAxisAngle(Z, -angle);
+  IN_R.setFromAxisAngle(Z, angle);
+  arms[0].quaternion.premultiply(IN_L);
+  arms[1].quaternion.premultiply(IN_R);
 }
 
 /** Rebuild a cloned KayKit rig as the hero. `root` must be a private (skinned) clone. */
@@ -318,7 +338,8 @@ export function buildHero(root: THREE.Object3D, shadows: boolean): Hero {
   add(b("spine"), lathe([[0.13, -0.02], [0.118, 0.1], [0.122, 0.2], [0.13, 0.26]]), col.jacket, { scale: FLAT });
   add(b("chest"), lathe([[0.13, -0.04], [0.15, 0.06], [0.17, 0.16], [0.16, 0.22], [0.09, 0.27], [0.05, 0.29]]), col.jacket, { scale: [1, 1, 0.66] });
   // jacket front panel and lapel trim
-  add(b("chest"), new THREE.BoxGeometry(0.06, 0.32, 0.02), col.trim, { pos: [0, 0.08, 0.1], bare: true });
+  add(b("chest"), new THREE.BoxGeometry(0.026, 0.26, 0.006), col.trim, { pos: [0, 0.07, 0.097], bare: true });
+  add(b("spine"), new THREE.BoxGeometry(0.026, 0.24, 0.006), col.trim, { pos: [0, 0.12, 0.083], bare: true });
   add(b("chest"), lathe([[0.075, 0.2], [0.085, 0.26], [0.09, 0.32]], 16, Math.PI * 0.25, Math.PI * 1.5), col.trim, { side: THREE.DoubleSide, scale: [1, 1, 0.9] });
   add(b("hips"), new THREE.TorusGeometry(0.135, 0.016, 6, 24), col.gold, { pos: [0, 0.13, 0], rot: [Math.PI / 2, 0, 0], scale: [1, 0.7, 1], bare: true });
   add(b("hips"), new THREE.BoxGeometry(0.05, 0.04, 0.02), col.gold, { pos: [0, 0.13, 0.1], bare: true });
@@ -343,11 +364,12 @@ export function buildHero(root: THREE.Object3D, shadows: boolean): Hero {
     cape = new THREE.Group();
     cape.position.set(0, 0.24, -0.01);
     chest.add(cape);
-    add(cape, lathe([[0.15, 0.02], [0.2, -0.2], [0.26, -0.5], [0.3, -0.78]], 18, Math.PI * 0.42, Math.PI * 0.9), col.cape, {
+    // a narrow drape from the left shoulder down the back, not a full cloak
+    add(cape, lathe([[0.15, 0.02], [0.19, -0.18], [0.23, -0.4], [0.26, -0.6]], 14, CAPE_FROM, CAPE_SPAN), col.cape, {
       side: THREE.DoubleSide,
       scale: [1, 1, 0.72],
     });
-    add(cape, lathe([[0.298, -0.74], [0.302, -0.79]], 18, Math.PI * 0.42, Math.PI * 0.9), col.gold, { side: THREE.DoubleSide, scale: [1, 1, 0.72], bare: true });
+    add(cape, lathe([[0.258, -0.57], [0.262, -0.61]], 14, CAPE_FROM, CAPE_SPAN), col.gold, { side: THREE.DoubleSide, scale: [1, 1, 0.72], bare: true });
     // clasp at the shoulder
     add(cape, new THREE.SphereGeometry(0.03, 10, 8), col.gold, { pos: [0.13, 0.0, 0.07], bare: true });
   }
@@ -357,7 +379,7 @@ export function buildHero(root: THREE.Object3D, shadows: boolean): Hero {
     add(b(`upperarm.${s}`), limb(0.28, 0.05, 0.043), col.jacket);
     add(b(`lowerarm.${s}`), limb(0.25, 0.043, 0.033), col.jacket);
     add(b(`lowerarm.${s}`), lathe([[0.046, 0.15], [0.056, 0.2], [0.06, 0.24]], 12), col.trim, { side: THREE.DoubleSide });
-    add(b(`hand.${s}`), new THREE.SphereGeometry(0.042, 12, 10), col.under, { pos: [0, 0.035, 0], scale: [0.85, 1.25, 0.6] });
+    add(b(`wrist.${s}`), limb(0.12, 0.034, 0.03), col.under, { pos: [0, -0.01, 0], scale: [1, 1, 0.7] });
   }
   // shoulder pad on the cape side
   add(b("upperarm.l"), new THREE.SphereGeometry(0.07, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.55), col.trim, { pos: [0, 0.02, 0], scale: [1.05, 0.8, 1], side: THREE.DoubleSide });
@@ -391,6 +413,11 @@ export function buildHero(root: THREE.Object3D, shadows: boolean): Hero {
     for (const sx of [1, -1]) {
       add(skull, new THREE.SphereGeometry(0.022, 10, 8), col.skin, { pos: [sx * HEAD_R * 0.93, -0.01, -0.005], scale: [0.45, 1, 0.8], glow: 0.32, bare: true });
     }
+    // anime face shading: a soft, wide terminator and more self-light, so the face
+    // never splits into hard light and dark halves
+    const faceSkin = toon(col.skin, 0.42);
+    faceSkin.defines = { ...faceSkin.defines, TOON_SOFTNESS: "0.35" };
+    skull.material = faceSkin;
     /* hair: a cap over the crown and back, then layered locks */
     add(skull, new THREE.SphereGeometry(HEAD_R * 1.06, 28, 14, 0, Math.PI * 2, 0, Math.PI * 0.4), col.hair, { side: THREE.DoubleSide, glow: 0.18 });
     add(skull, new THREE.SphereGeometry(HEAD_R * 1.05, 28, 18, Math.PI / 2 + 0.85, Math.PI * 2 - 1.7, 0, Math.PI * 0.74), col.hair, {
@@ -424,10 +451,18 @@ export function buildHero(root: THREE.Object3D, shadows: boolean): Hero {
     for (const [phi, t0, t1, w, lift, flick] of locks) {
       add(skull, lock(phi, t0 * Math.PI, t1 * Math.PI, w, lift, flick), col.hair, { glow: 0.18 });
     }
+    // glossy shine band around the crown, across the front and sides
+    const shine = new THREE.Mesh(
+      new THREE.SphereGeometry(HEAD_R * 1.085, 32, 2, Math.PI / 2 - 1.35, 2.7, Math.PI * 0.21, Math.PI * 0.055),
+      new THREE.MeshBasicMaterial({ color: col.hairShine, transparent: true, opacity: 0.75, depthWrite: false, side: THREE.DoubleSide }),
+    );
+    shine.renderOrder = 3;
+    skull.add(shine);
     // short tail tied at the nape
     add(skull, lock(F + Math.PI, 0.62 * Math.PI, 0.98 * Math.PI, 0.03, 1.55, 0), col.hair, { glow: 0.18 });
     add(skull, new THREE.TorusGeometry(0.022, 0.008, 6, 14), col.gold, { pos: [0, -0.06, -HEAD_R * 0.98], bare: true });
   }
 
-  return { shells, cape };
+  const arms = [b("upperarm.l"), b("upperarm.r")].filter((x): x is THREE.Object3D => !!x);
+  return { shells, cape, arms };
 }

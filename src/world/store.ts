@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import type { LandmarkId, Quality } from "./config";
+import type { TimeSetting } from "./lighting";
 
 /** Visitor preferences from the Settings screen (saved in the browser). */
 export interface Prefs {
@@ -15,6 +16,9 @@ export interface Prefs {
   markers: boolean;
   guide: boolean; // controls guide in the corner
   character: "hero" | "ranger" | "mage";
+  timeOfDay: TimeSetting;
+  waterSounds: boolean;
+  waterVolume: number; // 0–10
   outlines: boolean;
   ao: boolean;
   music: boolean;
@@ -34,6 +38,9 @@ export const DEFAULT_PREFS: Prefs = {
   markers: true,
   guide: true,
   character: "hero",
+  timeOfDay: "day",
+  waterSounds: true,
+  waterVolume: 6,
   outlines: true,
   ao: true,
   music: true,

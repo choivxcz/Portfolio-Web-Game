@@ -9,7 +9,29 @@ import { projects, type Project } from "../../../data/projects";
 import { LANDMARKS, type LandmarkId } from "../../config";
 import { facing } from "../../layout";
 import { terrainHeight } from "../../terrain";
-import { Column, Lantern, MAT, PavilionRoof, archGeometry, columnGeometry, gableFill, gableGeometry, starGeometry } from "./parts";
+import { Column, Lantern, MAT, archGeometry, columnGeometry, gableFill, gableGeometry, starGeometry } from "./parts";
+import { bannerTexture, clothMaterial } from "./Ornaments";
+import { HangingLantern, RibbedDome, glassMaterial } from "./ornate";
+
+/** One cloth material for every landmark banner (it sways in the wind). */
+const bannerCloth = (() => {
+  let m: THREE.Material | null = null;
+  return () => (m ??= clothMaterial(bannerTexture()));
+})();
+
+/** A cloth banner hanging from a short rod; the group is left out of static batching so it can sway. */
+function WallBanner({ w = 1.1, h = 2.6, ...props }: { w?: number; h?: number } & { position?: [number, number, number]; rotation?: [number, number, number] }) {
+  return (
+    <group {...props} userData={{ dynamic: true }}>
+      <mesh material={MAT.woodDark} position={[0, h / 2 + 0.06, 0.04]}>
+        <boxGeometry args={[w + 0.3, 0.07, 0.07]} />
+      </mesh>
+      <mesh material={bannerCloth()} position={[0, 0, 0.07]}>
+        <planeGeometry args={[w, h, 4, 12]} />
+      </mesh>
+    </group>
+  );
+}
 
 const at = (id: LandmarkId) => {
   const L = LANDMARKS.find((l) => l.id === id)!;
@@ -57,8 +79,24 @@ function JournalShrine() {
         const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
         return <Column key={i} position={[Math.cos(a) * 5.4, 0.9, Math.sin(a) * 5.4]} height={5} radius={0.42} />;
       })}
-      {/* hexagonal pavilion roof; its corners sit over the columns */}
-      <PavilionRoof ring={5.4} radius={7.4} height={4.2} sides={6} phiStart={Math.PI / 3} material={MAT.roofBlue} position={[0, 5.9, 0]} />
+      {/* a domed rotunda: carved stone ring on the columns, gilded band, ribbed dome and an open lantern */}
+      <mesh material={MAT.stone} position={[0, 6.25, 0]} castShadow>
+        <cylinderGeometry args={[6.05, 5.85, 0.75, 36, 1, true]} />
+      </mesh>
+      <mesh material={MAT.stoneWarm} position={[0, 6.25, 0]}>
+        <cylinderGeometry args={[4.95, 4.95, 0.75, 36, 1, true]} />
+      </mesh>
+      <mesh material={MAT.stone} position={[0, 6.62, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[4.95, 6.2, 36, 1]} />
+      </mesh>
+      <mesh material={MAT.gold} position={[0, 5.95, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[6.06, 0.07, 6, 48]} />
+      </mesh>
+      <RibbedDome radius={5.9} rise={4.1} ribs={12} material={MAT.roofBlue} position={[0, 6.62, 0]} />
+      {Array.from({ length: 6 }, (_, i) => {
+        const a = (i / 6) * Math.PI * 2;
+        return <HangingLantern key={i} position={[Math.cos(a) * 5.4, 5.88, Math.sin(a) * 5.4]} drop={0.5} />;
+      })}
       {/* stele with gold emblem */}
       <mesh geometry={stele} material={MAT.stoneWarm} position={[0, 1.3, -2.9]} castShadow />
       <mesh geometry={star} material={MAT.gold} position={[0, 4.2, -2.25]} />
@@ -97,6 +135,7 @@ function Academy() {
   const roofFill = useMemo(() => gableFill(16, 4.2, 11.6), []);
   const pediment = useMemo(() => gableFill(15, 2.6, 0.8), []);
   const col = useMemo(() => columnGeometry(7.2, 0.42), []);
+  const academyWindow = useMemo(() => archGeometry(1.7, 3.6, 0.16, 1.2), []);
   return (
     <group {...at("skills")}>
       <mesh material={MAT.stoneDark} position={[0, -2.6, 1]}>
@@ -123,13 +162,29 @@ function Academy() {
         <boxGeometry args={[15.4, 0.9, 1.6]} />
       </mesh>
       <mesh geometry={pediment} material={MAT.stone} position={[0, 9.15, 6.4]} />
-      <mesh material={MAT.gold} position={[0, 10.1, 6.85]} rotation={[Math.PI / 2, 0, 0]}>
-        <cylinderGeometry args={[0.8, 0.8, 0.12, 20]} />
+      <mesh material={MAT.gold} position={[0, 10.1, 6.9]}>
+        <torusGeometry args={[0.92, 0.1, 8, 28]} />
       </mesh>
-      {/* windows */}
+      <mesh material={glassMaterial()} position={[0, 10.1, 6.86]}>
+        <circleGeometry args={[0.88, 28]} />
+      </mesh>
+      {/* tall arched stained-glass windows in carved frames */}
       {[-5, -1.7, 1.7, 5].map((x) => (
-        <mesh key={x} material={MAT.glow} position={[x, 4.6, 5.02]}>
-          <boxGeometry args={[1.2, 2.4, 0.08]} />
+        <group key={x} position={[x, 3.2, 5.08]}>
+          <mesh geometry={academyWindow} material={MAT.stone} />
+          {/* glass sits 4 cm in front of the wall, inside the frame */}
+          <mesh material={glassMaterial()} position={[0, 1.15, -0.04]}>
+            <planeGeometry args={[1.2, 2.3]} />
+          </mesh>
+          <mesh material={glassMaterial()} position={[0, 2.3, -0.04]}>
+            <circleGeometry args={[0.6, 20, 0, Math.PI]} />
+          </mesh>
+        </group>
+      ))}
+      {/* gilded cornice along the eaves */}
+      {[-1, 1].map((s) => (
+        <mesh key={s} material={MAT.gold} position={[0, 9.15, -1 + s * 6.06]}>
+          <boxGeometry args={[16.2, 0.16, 0.12]} />
         </mesh>
       ))}
       <mesh material={MAT.woodDark} position={[0, 2.9, 5.03]}>
@@ -141,37 +196,93 @@ function Academy() {
       </mesh>
       {Array.from({ length: 8 }, (_, i) => {
         const a = (i / 8) * Math.PI * 2;
+        if (i === 0) return null; // the clock faces the front
         return (
-          <mesh key={i} material={MAT.glow} position={[Math.sin(a) * 3.05, 12.4, -3 + Math.cos(a) * 3.05]} rotation={[0, a, 0]}>
-            <boxGeometry args={[0.7, 1.6, 0.1]} />
+          <mesh key={i} material={glassMaterial()} position={[Math.sin(a) * 3.05, 12.4, -3 + Math.cos(a) * 3.05]} rotation={[0, a, 0]}>
+            <boxGeometry args={[0.7, 1.6, 0.06]} />
           </mesh>
         );
       })}
+      <group position={[0, 12.6, 0.3]}>
+        <mesh material={MAT.gold}>
+          <torusGeometry args={[1.05, 0.1, 8, 32]} />
+        </mesh>
+        <mesh material={MAT.paper} position={[0, 0, -0.03]}>
+          <circleGeometry args={[1.0, 32]} />
+        </mesh>
+        {Array.from({ length: 12 }, (_, k) => {
+          const a = (k / 12) * Math.PI * 2;
+          return (
+            <mesh key={k} material={MAT.woodDark} position={[Math.sin(a) * 0.82, Math.cos(a) * 0.82, 0.01]} rotation={[0, 0, -a]}>
+              <boxGeometry args={[0.05, 0.16, 0.02]} />
+            </mesh>
+          );
+        })}
+        <mesh material={MAT.woodDark} position={[0.18, 0.18, 0.03]} rotation={[0, 0, -Math.PI / 4]}>
+          <boxGeometry args={[0.07, 0.55, 0.02]} />
+        </mesh>
+        <mesh material={MAT.woodDark} position={[0, 0.3, 0.04]}>
+          <boxGeometry args={[0.05, 0.62, 0.02]} />
+        </mesh>
+      </group>
       <mesh material={MAT.stone} position={[0, 15.2, -3]}>
         <cylinderGeometry args={[3.5, 3.5, 0.5, 16]} />
       </mesh>
-      <mesh material={MAT.roofBlue} position={[0, 15.4, -3]} castShadow>
-        <sphereGeometry args={[3.1, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
-      </mesh>
-      <mesh material={MAT.gold} position={[0, 19.2, -3]}>
-        <coneGeometry args={[0.35, 1.8, 8]} />
-      </mesh>
+      <RibbedDome radius={3.2} rise={3.3} ribs={10} material={MAT.roofBlue} position={[0, 15.45, -3]} />
       {/* corner turrets */}
       {[-8.4, 8.4].map((x) => (
         <group key={x} position={[x, 0, -6.6]}>
           <mesh material={MAT.stone} position={[0, 6, 0]} castShadow>
             <cylinderGeometry args={[1.5, 1.7, 12, 12]} />
           </mesh>
-          <mesh material={MAT.roofBlue} position={[0, 13.4, 0]} castShadow>
-            <coneGeometry args={[2, 3, 12]} />
+          <mesh material={MAT.stone} position={[0, 10.2, 0]}>
+            <cylinderGeometry args={[2.2, 2.0, 0.3, 14]} />
+          </mesh>
+          {Array.from({ length: 14 }, (_, k) => {
+            const a = (k / 14) * Math.PI * 2;
+            return (
+              <mesh key={k} material={MAT.stone} position={[Math.cos(a) * 2.05, 10.65, Math.sin(a) * 2.05]}>
+                <cylinderGeometry args={[0.06, 0.08, 0.6, 6]} />
+              </mesh>
+            );
+          })}
+          <mesh material={MAT.gold} position={[0, 10.98, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <torusGeometry args={[2.05, 0.06, 6, 28]} />
+          </mesh>
+          <mesh material={MAT.roofBlue} position={[0, 14.2, 0]} castShadow>
+            <coneGeometry args={[2.1, 4.4, 14]} />
+          </mesh>
+          <mesh material={MAT.gold} position={[0, 12.02, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <torusGeometry args={[2.08, 0.07, 6, 28]} />
+          </mesh>
+          <mesh material={MAT.gold} position={[0, 16.8, 0]}>
+            <coneGeometry args={[0.14, 0.9, 8]} />
+          </mesh>
+          <mesh material={glassMaterial()} position={[0, 8, 1.66]}>
+            <planeGeometry args={[0.6, 1.4]} />
           </mesh>
         </group>
       ))}
-      {/* banners */}
-      {[-4.8, 4.8].map((x) => (
-        <mesh key={x} material={MAT.cloth} position={[x, 6, 7.1]}>
-          <boxGeometry args={[1.1, 3.6, 0.05]} />
-        </mesh>
+      {/* banners on the corners of the front, clear of the windows */}
+      {[-7.3, 7.3].map((x) => (
+        <WallBanner key={x} position={[x, 6, 5.1]} h={3.4} />
+      ))}
+      {/* lamp posts flanking the steps */}
+      {[-7.4, 7.4].map((x) => (
+        <group key={x} position={[x, 0.4, 9.6]}>
+          <mesh material={MAT.stoneDark} position={[0, 0.3, 0]}>
+            <boxGeometry args={[0.6, 0.6, 0.6]} />
+          </mesh>
+          <mesh material={MAT.woodDark} position={[0, 2, 0]}>
+            <cylinderGeometry args={[0.08, 0.1, 2.8, 8]} />
+          </mesh>
+          <mesh material={MAT.gold} position={[0, 3.45, 0]}>
+            <coneGeometry args={[0.3, 0.25, 6]} />
+          </mesh>
+          <mesh material={MAT.glow} position={[0, 3.15, 0]}>
+            <cylinderGeometry args={[0.2, 0.17, 0.4, 6]} />
+          </mesh>
+        </group>
       ))}
     </group>
   );
@@ -279,6 +390,8 @@ async function regionImage(region: PlaceId, id: string) {
 }
 
 function ExpeditionBoard() {
+  const boardRoof = useMemo(() => gableGeometry(2.0, 1.05, 6.2, 0.25), []);
+  const boardStar = useMemo(() => starGeometry(0.28, 0.1, 0.06), []);
   const notes = useMemo(
     () =>
       projects.slice(0, 8).map((p, i) => {
@@ -314,11 +427,32 @@ function ExpeditionBoard() {
 
   return (
     <group {...at("projects")}>
+      <mesh material={MAT.stoneWarm} position={[0, 0.2, 0]} receiveShadow castShadow>
+        <boxGeometry args={[5.9, 0.4, 0.9]} />
+      </mesh>
       {[-2.5, 2.5].map((x) => (
-        <mesh key={x} material={MAT.woodDark} position={[x, 2, 0]} castShadow>
-          <boxGeometry args={[0.32, 4, 0.32]} />
-        </mesh>
+        <group key={x} position={[x, 0, 0]}>
+          <mesh material={MAT.stoneDark} position={[0, 0.65, 0]} castShadow>
+            <boxGeometry args={[0.6, 0.5, 0.6]} />
+          </mesh>
+          <mesh material={MAT.woodDark} position={[0, 2.4, 0]} castShadow>
+            <boxGeometry args={[0.38, 4.0, 0.38]} />
+          </mesh>
+          <mesh material={MAT.gold} position={[0, 4.4, 0]}>
+            <boxGeometry args={[0.46, 0.12, 0.46]} />
+          </mesh>
+          {/* carved bracket under the roof */}
+          <mesh material={MAT.wood} position={[0, 3.95, 0.35]} rotation={[0.75, 0, 0]}>
+            <boxGeometry args={[0.16, 0.9, 0.16]} />
+          </mesh>
+          <HangingLantern position={[x > 0 ? 0.45 : -0.45, 4.25, 0.6]} drop={0.35} />
+        </group>
       ))}
+      {/* crest plank with the valley's compass star */}
+      <mesh material={MAT.wood} position={[0, 4.05, 0.14]}>
+        <boxGeometry args={[2.4, 0.5, 0.1]} />
+      </mesh>
+      <mesh geometry={boardStar} material={MAT.gold} position={[0, 4.05, 0.22]} />
       <mesh material={MAT.wood} position={[0, 2.2, 0]} castShadow receiveShadow>
         <boxGeometry args={[5, 2.9, 0.22]} />
       </mesh>
@@ -328,12 +462,14 @@ function ExpeditionBoard() {
       <mesh material={MAT.woodDark} position={[0, 0.68, 0.05]}>
         <boxGeometry args={[5.3, 0.16, 0.32]} />
       </mesh>
-      <mesh material={MAT.roofRed} position={[0, 4.35, 0.15]} rotation={[0.5, 0, 0]} castShadow>
-        <boxGeometry args={[6, 0.14, 1.4]} />
-      </mesh>
-      <mesh material={MAT.roofRed} position={[0, 4.35, -0.45]} rotation={[-0.5, 0, 0]} castShadow>
-        <boxGeometry args={[6, 0.14, 1.2]} />
-      </mesh>
+      {/* tiled gable roof with a ridge cap and gilded finials */}
+      <mesh geometry={boardRoof} material={MAT.roofRed} position={[0, 4.5, 0]} rotation={[0, Math.PI / 2, 0]} castShadow />
+      {[-3.3, 3.3].map((x) => (
+        <mesh key={x} material={MAT.gold} position={[x, 5.65, 0]}>
+          <coneGeometry args={[0.09, 0.45, 8]} />
+        </mesh>
+      ))}
+      <mesh geometry={boardStar} material={MAT.gold} position={[0, 5.95, 0]} scale={1.3} />
       {notes.map((n) => (
         <group key={n.p.id} position={[n.x, n.y, 0.125]} rotation={[0, 0, n.r]}>
           <mesh>
@@ -378,8 +514,32 @@ function HallOfAchievements() {
         const a = (i / 8) * Math.PI * 2;
         return <Column key={i} position={[Math.cos(a) * 6.8, 1.3, Math.sin(a) * 6.8]} height={6.2} radius={0.5} />;
       })}
-      {/* octagonal roof with a glowing lantern cupola; corners sit over the columns */}
-      <PavilionRoof ring={6.8} radius={9.4} height={4.4} sides={8} phiStart={Math.PI / 2} material={MAT.roofRed} cupola position={[0, 7.5, 0]} />
+      {/* octagonal entablature, then a ribbed octagonal dome with a glowing cupola */}
+      <mesh material={MAT.stone} position={[0, 7.95, 0]} rotation={[0, Math.PI / 8, 0]} castShadow>
+        <cylinderGeometry args={[7.6, 7.4, 0.9, 8, 1, true]} />
+      </mesh>
+      <mesh material={MAT.stoneWarm} position={[0, 7.95, 0]} rotation={[0, Math.PI / 8, 0]}>
+        <cylinderGeometry args={[6.3, 6.3, 0.9, 8, 1, true]} />
+      </mesh>
+      <mesh material={MAT.stone} position={[0, 8.4, 0]} rotation={[-Math.PI / 2, 0, Math.PI / 8]}>
+        <ringGeometry args={[6.3, 7.75, 8, 1]} />
+      </mesh>
+      <mesh material={MAT.gold} position={[0, 7.52, 0]} rotation={[Math.PI / 2, 0, Math.PI / 8]}>
+        <torusGeometry args={[7.55, 0.08, 6, 8]} />
+      </mesh>
+      <RibbedDome radius={7.5} rise={5.2} ribs={8} sides={8} material={MAT.roofRed} position={[0, 8.4, 0]} rotation={[0, Math.PI / 8, 0]} />
+      {/* rose window high on the back wall */}
+      <mesh material={MAT.stone} position={[0, 5.1, -6.8]}>
+        <torusGeometry args={[1.55, 0.22, 8, 32]} />
+      </mesh>
+      <mesh material={glassMaterial()} position={[0, 5.1, -6.88]}>
+        <circleGeometry args={[1.5, 32]} />
+      </mesh>
+      {/* banners between the side columns */}
+      {[2, 3, 5, 6].map((i) => {
+        const a = ((i + 0.5) / 8) * Math.PI * 2;
+        return <WallBanner key={i} position={[Math.cos(a) * 6.3, 4.9, Math.sin(a) * 6.3]} rotation={[0, Math.atan2(Math.cos(a), Math.sin(a)), 0]} h={3.0} />;
+      })}
       <mesh geometry={arch} material={MAT.stone} position={[0, 1.3, 8]} castShadow />
       <mesh material={MAT.gold} position={[0, 7.4, 8.6]} rotation={[0, 0, Math.PI / 4]}>
         <boxGeometry args={[0.6, 0.6, 0.2]} />
@@ -409,6 +569,7 @@ function HallOfAchievements() {
 
 /* ── Contact: the Communication Beacon ── */
 function Beacon({ light }: { light: boolean }) {
+  const beaconDoor = useMemo(() => archGeometry(2.2, 3.3, 0.5, 1.4), []);
   const crystal = useRef<THREE.Mesh>(null);
   useFrame(({ clock }) => {
     if (crystal.current) {
@@ -442,8 +603,40 @@ function Beacon({ light }: { light: boolean }) {
           );
         }),
       )}
+      {/* buttresses around the base */}
+      {Array.from({ length: 8 }, (_, i) => {
+        const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
+        if (i === 0 || i === 7) return null; // leave the door side (+z, toward the arrival point) open
+        return (
+          <mesh key={`b${i}`} material={MAT.stoneWarm} position={[Math.sin(a) * 3.35, 2.6, Math.cos(a) * 3.35]} rotation={[0, a, 0]} castShadow>
+            <boxGeometry args={[0.7, 4.2, 1.1]} />
+          </mesh>
+        );
+      })}
+      {/* arched door facing the arrival point */}
+      <mesh geometry={beaconDoor} material={MAT.stoneWarm} position={[0, 1.15, 3.05]} castShadow />
+      <mesh material={MAT.woodDoor} position={[0, 2.25, 2.98]}>
+        <boxGeometry args={[1.3, 2.3, 0.1]} />
+      </mesh>
+      {/* gallery: a wide railed balcony around the lantern room */}
       <mesh material={MAT.stone} position={[0, 19.4, 0]} castShadow>
-        <cylinderGeometry args={[3.6, 3.6, 0.6, 8]} />
+        <cylinderGeometry args={[4.3, 3.6, 0.7, 16]} />
+      </mesh>
+      {Array.from({ length: 24 }, (_, k) => {
+        const a = (k / 24) * Math.PI * 2;
+        return (
+          <mesh key={`r${k}`} material={MAT.stone} position={[Math.cos(a) * 4.1, 20.15, Math.sin(a) * 4.1]}>
+            <cylinderGeometry args={[0.07, 0.09, 0.8, 6]} />
+          </mesh>
+        );
+      })}
+      <mesh material={MAT.gold} position={[0, 20.58, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[4.1, 0.08, 6, 40]} />
+      </mesh>
+      {/* glazed lantern room around the crystal */}
+      <mesh position={[0, 21.6, 0]} renderOrder={3}>
+        <cylinderGeometry args={[2.55, 2.55, 3.4, 8, 1, true]} />
+        <meshBasicMaterial color="#bff4ff" transparent opacity={0.22} side={THREE.DoubleSide} depthWrite={false} toneMapped={false} />
       </mesh>
       {Array.from({ length: 4 }, (_, i) => {
         const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
@@ -453,12 +646,24 @@ function Beacon({ light }: { light: boolean }) {
           </mesh>
         );
       })}
-      <mesh material={MAT.roofBlue} position={[0, 24.6, 0]} castShadow>
-        <coneGeometry args={[3.4, 3.4, 8]} />
+      <mesh material={MAT.gold} position={[0, 23.35, 0]}>
+        <cylinderGeometry args={[3.55, 3.55, 0.2, 8]} />
       </mesh>
-      <mesh material={MAT.gold} position={[0, 27, 0]}>
+      <mesh material={MAT.roofBlue} position={[0, 25.2, 0]} castShadow>
+        <coneGeometry args={[3.4, 3.6, 8]} />
+      </mesh>
+      <mesh material={MAT.gold} position={[0, 27.7, 0]}>
         <coneGeometry args={[0.3, 1.4, 8]} />
       </mesh>
+      {/* pennant flying from the spire */}
+      <mesh material={MAT.woodDark} position={[0, 29.3, 0]}>
+        <cylinderGeometry args={[0.05, 0.05, 2.2, 6]} />
+      </mesh>
+      <group position={[0, 29.8, 0]} userData={{ dynamic: true }}>
+        <mesh material={bannerCloth()} position={[0.75, 0, 0]} rotation={[0, 0, -Math.PI / 2]}>
+          <planeGeometry args={[0.7, 1.5, 2, 8]} />
+        </mesh>
+      </group>
       <mesh ref={crystal} userData={{ dynamic: true }} material={MAT.crystal} position={[0, 21.6, 0]} scale={[0.75, 1.15, 0.75]}>
         <octahedronGeometry args={[1, 0]} />
       </mesh>

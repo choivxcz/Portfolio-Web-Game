@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { ENV } from "../config";
-import { SUN_DIR } from "./Sky";
+import { SKY, SUN_DIR } from "./Sky";
 
 /**
  * Aerial perspective for every material that uses fog, patched into three's fog
@@ -12,17 +12,19 @@ import { SUN_DIR } from "./Sky";
  * - thin mist pooled in the valleys, below `ENV.haze.mistHeight`.
  *
  * The scene's <fog> still supplies the colour and enables USE_FOG; `fogNear`
- * is read as the start of the haze.
+ * is read as the start of the haze. The sun direction and warm tint are compiled in,
+ * so `patchAtmosphere` runs again whenever the time of day changes (lighting.ts),
+ * before the renderer is recreated.
  */
 
 const glsl = (n: number) => n.toFixed(5);
 const vec3 = (c: THREE.Color) => `vec3(${glsl(c.r)}, ${glsl(c.g)}, ${glsl(c.b)})`;
 
-function patch() {
+/** (Re)write three's fog chunks for the current sun and sky (see lighting.ts). */
+export function patchAtmosphere() {
   const chunks = THREE.ShaderChunk as Record<string, string>;
-  if (chunks.fog_fragment.includes("vFogView")) return;
   const h = ENV.haze;
-  const warm = new THREE.Color(h.warm); // converted to linear, like the fog colour uniform
+  const warm = new THREE.Color(SKY.warm); // converted to linear, like the fog colour uniform
   const sun = SUN_DIR.clone().normalize();
 
   chunks.fog_pars_vertex = /* glsl */ `
@@ -76,4 +78,4 @@ uniform float fogFar;
 #endif`;
 }
 
-patch();
+patchAtmosphere();

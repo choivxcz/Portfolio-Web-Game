@@ -7,7 +7,7 @@ import type { Placement } from "../scatter";
 import { useWorld } from "../store";
 import { addOutlineNormals, outlineMaterial } from "./outline";
 import { toonRamp } from "./Vegetation";
-import { withRim } from "./toonShading";
+import { withRim, withTranslucency } from "./toonShading";
 
 /**
  * CC0 models (see public/models/CREDITS.md), drawn with instancing and
@@ -65,7 +65,7 @@ function toToon(src: THREE.MeshStandardMaterial, foliage: boolean, tint?: string
   });
   if (src.map) src.map.anisotropy = 16; // crisp textures at grazing angles
   if (leafy) {
-    withRim(m);
+    withTranslucency(withRim(m));
     // a little self-illumination keeps canopies from ever reading as black
     m.emissive = m.color.clone().multiplyScalar(0.22);
     m.emissiveMap = src.map;

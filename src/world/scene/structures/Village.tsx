@@ -1,11 +1,12 @@
 import { useFrame, type ThreeElements } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, type ReactElement } from "react";
 import * as THREE from "three";
 import { BRIDGE } from "../../config";
 import { HOUSES, LANTERNS, SIGNPOST, WINDMILL } from "../../layout";
 import { bridgeDeck, terrainHeight } from "../../terrain";
 import { Ivy } from "./Ivy";
-import { Lantern, MAT, archGeometry, gableFill } from "./parts";
+import { Townhouse } from "./Townhouse";
+import { Lantern, MAT, archGeometry, gableFill, gableGeometry } from "./parts";
 
 const ground = (x: number, z: number) => terrainHeight(x, z);
 
@@ -26,6 +27,38 @@ function RoofSlabs({ w, d, top, rise, mat, ov = 0.6 }: { w: number; d: number; t
       <mesh material={mat} position={[0, top + rise + 0.2, 0]} castShadow>
         <boxGeometry args={[0.46, 0.32, d + ov * 2 + 0.06]} />
       </mesh>
+    </>
+  );
+}
+
+/**
+ * Carved cream bargeboards along both gable ends, with a gilded finial at each end
+ * of the ridge (same slope maths as RoofSlabs).
+ */
+function GableTrim({ w, d, top, rise, ov = 0.6 }: { w: number; d: number; top: number; rise: number; ov?: number }) {
+  const theta = Math.atan2(rise, w / 2);
+  const hs = w / 2 + ov;
+  const len = hs / Math.cos(theta) + 0.1;
+  const eaveY = top - ov * Math.tan(theta);
+  const midY = (eaveY + top + rise) / 2;
+  const ez = d / 2 + ov + 0.06;
+  return (
+    <>
+      {[1, -1].map((end) => (
+        <group key={end} position={[0, 0, end * ez]}>
+          {[1, -1].map((side) => (
+            <mesh key={side} material={MAT.plaster} position={[(side * hs) / 2, midY + 0.06, 0]} rotation={[0, 0, -side * theta]}>
+              <boxGeometry args={[len, 0.22, 0.1]} />
+            </mesh>
+          ))}
+          <mesh material={MAT.gold} position={[0, top + rise + 0.62, 0]}>
+            <coneGeometry args={[0.1, 0.55, 8]} />
+          </mesh>
+          <mesh material={MAT.gold} position={[0, top + rise + 0.34, 0]}>
+            <sphereGeometry args={[0.13, 10, 8]} />
+          </mesh>
+        </group>
+      ))}
     </>
   );
 }
@@ -59,6 +92,62 @@ function Window(props: ThreeElements["group"]) {
           <icosahedronGeometry args={[0.17, 0]} />
         </mesh>
       ))}
+    </group>
+  );
+}
+
+/**
+ * Diagonal half-timber braces in the corners of one wall, on both storeys.
+ * `span` is the wall's width; the wall faces +z at `face`.
+ */
+function Braces({ span, face, base, h }: { span: number; face: number; base: number; h: number }) {
+  const mid = base + h * 0.47;
+  const top = base + h - 0.12;
+  const reach = Math.min(0.95, span * 0.16);
+  const out: ReactElement[] = [];
+  for (const [y0, y1] of [
+    [base, mid],
+    [mid, top],
+  ]) {
+    const dy = y1 - y0;
+    const len = Math.hypot(reach, dy);
+    const ang = Math.atan2(dy, reach);
+    for (const side of [-1, 1]) {
+      const cx = side * (span / 2 - reach / 2);
+      out.push(
+        <mesh key={`${y0}${side}`} material={MAT.woodDark} position={[cx, (y0 + y1) / 2, face]} rotation={[0, 0, side * (Math.PI / 2 - ang)]}>
+          <boxGeometry args={[0.16, len, 0.08]} />
+        </mesh>,
+      );
+    }
+  }
+  return <>{out}</>;
+}
+
+/** Stone half-round arch over a doorway (flat faces toward ±z, arc upward). */
+function ArchTop({ r, depth, material, ...props }: { r: number; depth: number; material: THREE.Material } & ThreeElements["group"]) {
+  return (
+    <group {...props}>
+      <mesh material={material} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[r, r, depth, 18, 1, false, Math.PI / 2, Math.PI]} />
+      </mesh>
+    </group>
+  );
+}
+
+/** A small gabled dormer window sticking out of the roof slope (its window faces local +z). */
+function Dormer(props: ThreeElements["group"]) {
+  const roof = useMemo(() => gableGeometry(1.3, 0.62, 1.7, 0.14), []);
+  return (
+    <group {...props}>
+      <mesh material={MAT.plaster} position={[0, 0.5, -0.35]} castShadow>
+        <boxGeometry args={[1.3, 1.2, 1.5]} />
+      </mesh>
+      <mesh material={MAT.woodDark} position={[0, 1.12, -0.35]}>
+        <boxGeometry args={[1.42, 0.12, 1.56]} />
+      </mesh>
+      <mesh geometry={roof} material={MAT.roofRed} position={[0, 1.16, -0.35]} castShadow />
+      <Window position={[0, 0.62, 0.42]} scale={0.72} />
     </group>
   );
 }
@@ -103,6 +192,35 @@ export function House({ x, z, yaw, roof, w, d }: (typeof HOUSES)[number]) {
         </group>
       ))}
       <RoofSlabs w={w} d={d} top={top} rise={rise} mat={roofMat} />
+      <GableTrim w={w} d={d} top={top} rise={rise} />
+      {/* half-timber bracing on all four walls */}
+      <Braces span={w} face={d / 2 + 0.05} base={base} h={h} />
+      <group rotation={[0, Math.PI, 0]}>
+        <Braces span={w} face={d / 2 + 0.05} base={base} h={h} />
+      </group>
+      <group rotation={[0, Math.PI / 2, 0]}>
+        <Braces span={d} face={w / 2 + 0.05} base={base} h={h} />
+      </group>
+      <group rotation={[0, -Math.PI / 2, 0]}>
+        <Braces span={d} face={w / 2 + 0.05} base={base} h={h} />
+      </group>
+      {/* round window in the front gable */}
+      <group position={[0, top + rise * 0.38, d / 2 + 0.06]}>
+        <mesh material={MAT.woodDark}>
+          <torusGeometry args={[0.42, 0.08, 8, 24]} />
+        </mesh>
+        <mesh material={MAT.glass} position={[0, 0, -0.02]}>
+          <circleGeometry args={[0.4, 24]} />
+        </mesh>
+        <mesh material={MAT.woodDark}>
+          <boxGeometry args={[0.06, 0.8, 0.05]} />
+        </mesh>
+        <mesh material={MAT.woodDark}>
+          <boxGeometry args={[0.8, 0.06, 0.05]} />
+        </mesh>
+      </group>
+      {/* dormer on the side slope */}
+      {w >= 5.5 && <Dormer position={[w * 0.27, top + rise * 0.42, -d * 0.05]} rotation={[0, Math.PI / 2, 0]} />}
       {/* door with stone surround and step */}
       <mesh material={MAT.stone} position={[-w * 0.2, base + 1.2, d / 2 + 0.05]}>
         <boxGeometry args={[1.45, 2.5, 0.12]} />
@@ -110,6 +228,19 @@ export function House({ x, z, yaw, roof, w, d }: (typeof HOUSES)[number]) {
       <mesh material={MAT.woodDoor} position={[-w * 0.2, base + 1.08, d / 2 + 0.11]}>
         <boxGeometry args={[1.05, 2.15, 0.08]} />
       </mesh>
+      <ArchTop r={0.72} depth={0.12} material={MAT.stone} position={[-w * 0.2, base + 2.45, d / 2 + 0.05]} />
+      <ArchTop r={0.52} depth={0.08} material={MAT.woodDoor} position={[-w * 0.2, base + 2.15, d / 2 + 0.11]} />
+      <group position={[-w * 0.2 + 1.05, base + 2.2, d / 2 + 0.08]}>
+        <mesh material={MAT.woodDark} position={[0, 0.1, 0.15]}>
+          <boxGeometry args={[0.06, 0.06, 0.34]} />
+        </mesh>
+        <mesh material={MAT.glow} position={[0, -0.1, 0.3]}>
+          <boxGeometry args={[0.2, 0.28, 0.2]} />
+        </mesh>
+        <mesh material={MAT.roofRed} position={[0, 0.1, 0.3]}>
+          <coneGeometry args={[0.18, 0.16, 4]} />
+        </mesh>
+      </group>
       <mesh material={MAT.stoneWarm} position={[-w * 0.2, base - 0.12, d / 2 + 0.6]} receiveShadow>
         <boxGeometry args={[1.7, 0.26, 0.95]} />
       </mesh>
@@ -221,7 +352,7 @@ export function Village() {
   return (
     <>
       {HOUSES.map((h, i) => (
-        <House key={i} {...h} />
+        <Townhouse key={i} {...h} />
       ))}
       <Windmill />
       <Signpost />

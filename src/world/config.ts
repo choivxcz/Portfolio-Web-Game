@@ -105,6 +105,38 @@ export const PATH_WIDTH = 2.6;
 
 /** Lake (north-east) and the stream that flows south out of it. */
 export const LAKE = { x: 56, z: -82, r: 36 };
+/**
+ * The lake reaches further than the main basin: a bay below the Beacon's cliff (the
+ * waterfall pours into it) and a wide lobe north-west behind the village and town.
+ * Each lobe is a circle; they overlap the basin, so the water is one body. Placed
+ * clear of every landmark's flattened ground, path and house.
+ */
+export const LAKE_LOBES = [
+  { x: 68, z: -128, r: 21 },
+  { x: 24, z: -112, r: 30 },
+  { x: 46, z: -121, r: 15 }, // joins the two into one stretch of water
+  { x: 27, z: -88, r: 20 }, // widens the water west of the island, under the long bridge
+];
+const LAKES = [LAKE, ...LAKE_LOBES];
+const ease = (t: number) => {
+  const c = Math.min(1, Math.max(0, t));
+  return c * c * (3 - 2 * c);
+};
+/** 0..1 how much (x, z) is lake: 1 in open water, fading from 0.72 to 1.1 × radius. */
+export function lakeAmount(x: number, z: number) {
+  let a = 0;
+  for (const L of LAKES) {
+    const d = Math.hypot(x - L.x, z - L.z);
+    a = Math.max(a, 1 - ease((d - L.r * 0.72) / (L.r * 0.38)));
+  }
+  return a;
+}
+/** Distance from (x, z) to the nearest lake shoreline (any lobe). */
+export function lakeShoreDistance(x: number, z: number) {
+  let best = Infinity;
+  for (const L of LAKES) best = Math.min(best, Math.abs(Math.hypot(x - L.x, z - L.z) - L.r));
+  return best;
+}
 export const STREAM: Vec2[] = [
   [52, -50], [47, -32], [39, -10], [36, 16], [44, 46], [53, 82], [60, 124], [70, 200],
 ];
@@ -112,7 +144,7 @@ export const WATER_LEVEL = 0;
 
 /** Island in the lake carrying the walled lake town, and the long bridge out to it. */
 export const ISLAND = { x: 60, z: -86, r: 20, h: 3.4 };
-export const CITY_BRIDGE = { from: [27, -77] as Vec2, to: [44, -82] as Vec2 };
+export const CITY_BRIDGE = { from: [15.4, -73.6] as Vec2, to: [44, -82] as Vec2 };
 
 /** Stone bridge where the Academy path crosses the stream. */
 export const BRIDGE = { x: 46.6, z: -32.6, angle: Math.atan2(3, 14), length: 15, width: 3.4, deck: 2.2 };
@@ -170,6 +202,8 @@ export const ENV = {
     stoneHigh: "#ddd6c8",
     stoneWarm: "#d8c6a6",
     moss: "#6f9a4e",
+    stoneSun: "#e2c89a", // sun-baked ochre patches on the cliffs
+    stoneShade: "#8e8fb3", // cool lavender patches in the cliffs' recesses
   },
   /** Gusts: bright bands of bent grass rolling across the meadows. */
   wind: {
@@ -181,7 +215,124 @@ export const ENV = {
   /** Ink outlines on solid models (rocks, trunks, village props). */
   outline: { darken: 0.38, tint: "#27345f", tintAmount: 0.35 },
   post: { bloom: 0.46, bloomThreshold: 0.8 },
+  /** Lake swells (scene/Water.tsx): height and wavelength in metres, speed, depth where waves reach full height. */
+  waves: { height: 0.38, length: 11, speed: 1.4, fullDepth: 3.5 },
+  /** Wildlife (scene/Wildlife.tsx). */
+  life: {
+    butterflyCount: 16,
+    butterflies: ["#ffb347", "#fff6e8", "#7fb8ff", "#ffe066", "#f59ac8"],
+    birdCount: 7,
+    birds: "#3a3f58",
+    leafCount: 46,
+    leaves: ["#e8a83a", "#d8792c", "#f2c85a", "#8cc45e"],
+  },
 } as const;
+
+/**
+ * Time of day. Each preset sets the sun (or moon), the sky, the haze, a tint for the
+ * hand-shaded surfaces (grass, water, mountains, clouds) and the night extras.
+ * `sun` is [elevation, azimuth] in degrees; azimuth 0 = east (+x), -90 = north (-z).
+ * Colours are sRGB hex.
+ */
+export type TimeOfDay = "morning" | "day" | "golden" | "dusk" | "night";
+export interface TimePreset {
+  label: string;
+  sun: [number, number];
+  sunColor: string;
+  sunIntensity: number;
+  hemi: [string, string, number]; // sky colour, ground colour, intensity
+  ambient: [string, number];
+  sky: { top: string; mid: string; horizon: string; bottom: string; halo: string; warm: string };
+  tint: string; // multiplies grass, water, mountains
+  clouds: string; // multiplies the cloud sprites
+  emissive: number; // scales the soft self-light on foliage and characters
+  stars: number; // 0..1
+  lanterns: number; // 0..1 glow of path lanterns
+  shafts: number; // 0..1 light shafts through trees (needs medium or high quality)
+  bloom: number;
+}
+export const TIMES: Record<TimeOfDay, TimePreset> = {
+  morning: {
+    label: "Morning",
+    sun: [22, 150],
+    sunColor: "#fff0dc",
+    sunIntensity: 2.7,
+    hemi: ["#cfe0ff", "#a4ae86", 0.95],
+    ambient: ["#e3ebff", 0.12],
+    sky: { top: "#3c7fe0", mid: "#7ab6f0", horizon: "#e2edf6", bottom: "#c3d6e6", halo: "#fff4e0", warm: "#ffe6c4" },
+    tint: "#fbf7f2",
+    clouds: "#fffaf2",
+    emissive: 1,
+    stars: 0,
+    lanterns: 0,
+    shafts: 0.6,
+    bloom: 0.5,
+  },
+  day: {
+    label: "Midday",
+    sun: [46, 37],
+    sunColor: "#ffeccc",
+    sunIntensity: 3.1,
+    hemi: ["#b9cdff", "#9aa874", 1.0],
+    ambient: ["#dde6ff", 0.12],
+    sky: { top: ENV.sky.top, mid: ENV.sky.mid, horizon: ENV.haze.color, bottom: ENV.sky.bottom, halo: ENV.sky.sunHalo, warm: ENV.haze.warm },
+    tint: "#ffffff",
+    clouds: "#ffffff",
+    emissive: 1,
+    stars: 0,
+    lanterns: 0,
+    shafts: 0,
+    bloom: ENV.post.bloom,
+  },
+  golden: {
+    label: "Golden hour",
+    sun: [13, -58],
+    sunColor: "#ffc98c",
+    sunIntensity: 2.9,
+    hemi: ["#ffd8b8", "#8a8a6a", 0.85],
+    ambient: ["#ffe0c8", 0.1],
+    sky: { top: "#3a6cc2", mid: "#8fb2dc", horizon: "#ffdcae", bottom: "#e6c6a2", halo: "#ffd28e", warm: "#ffb46e" },
+    tint: "#ffe6c8",
+    clouds: "#ffdcbc",
+    emissive: 0.85,
+    stars: 0,
+    lanterns: 0.3,
+    shafts: 1,
+    bloom: 0.62,
+  },
+  dusk: {
+    label: "Dusk",
+    sun: [4, -78],
+    sunColor: "#ff9c6e",
+    sunIntensity: 1.7,
+    hemi: ["#9088c8", "#5a5060", 0.8],
+    ambient: ["#a89ad0", 0.12],
+    sky: { top: "#28306e", mid: "#7a5c9e", horizon: "#ffa27e", bottom: "#ad7c8c", halo: "#ffb48c", warm: "#ff7d56" },
+    tint: "#d9b0b8",
+    clouds: "#f0aaa4",
+    emissive: 0.6,
+    stars: 0.3,
+    lanterns: 0.85,
+    shafts: 0.7,
+    bloom: 0.66,
+  },
+  night: {
+    label: "Night",
+    sun: [52, 28], // the moon
+    sunColor: "#8fa8ff",
+    sunIntensity: 0.5,
+    hemi: ["#30407a", "#121828", 0.48],
+    ambient: ["#7080c0", 0.12],
+    sky: { top: "#050a22", mid: "#112044", horizon: "#2c3e6e", bottom: "#18223e", halo: "#d4e2ff", warm: "#4e64a0" },
+    tint: "#5e6ea2",
+    clouds: "#4f5c88",
+    emissive: 0.35,
+    stars: 1,
+    lanterns: 1,
+    shafts: 0,
+    bloom: 0.72,
+  },
+};
 
 /**
  * The original anime-style hero (scene/hero.ts): colours and how its stride is
@@ -192,7 +343,7 @@ export const HERO = {
     skin: "#ffe2d1",
     hair: "#8f402c", // auburn
     hairShine: "#c4664a",
-    iris: "#2f9c94", // teal-green
+    iris: "#1f7f7a", // teal-green
     irisLight: "#8fe3cf",
     lash: "#3a2420",
     jacket: "#1f6c78", // deep teal
@@ -207,6 +358,8 @@ export const HERO = {
   stride: { run: 12, walk: 3.8 },
   /** How far the cape lifts behind when running (radians). */
   capeLift: 0.55,
+  /** How far the arms are brought in from the rig's wide chibi poses (radians). */
+  armsIn: 0.42,
 } as const;
 
 export type Quality = "low" | "medium" | "high";
@@ -223,6 +376,6 @@ export interface QualityPreset {
 }
 export const QUALITY: Record<Quality, QualityPreset> = {
   low: { dpr: [1, 1], shadows: 0, grass: 7000, flowers: 500, trees: 95, rocks: 70, segments: 210, antialias: false, msaa: 0 },
-  medium: { dpr: [1, 1.5], shadows: 3072, grass: 28000, flowers: 1100, trees: 170, rocks: 100, segments: 300, antialias: true, msaa: 2 },
-  high: { dpr: [1, 2], shadows: 4096, grass: 50000, flowers: 1800, trees: 230, rocks: 130, segments: 360, antialias: true, msaa: 4 },
+  medium: { dpr: [1, 1.5], shadows: 3072, grass: 34000, flowers: 1500, trees: 170, rocks: 100, segments: 300, antialias: true, msaa: 2 },
+  high: { dpr: [1, 2], shadows: 4096, grass: 62000, flowers: 2400, trees: 230, rocks: 130, segments: 360, antialias: true, msaa: 4 },
 };

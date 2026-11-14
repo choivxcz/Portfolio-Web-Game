@@ -1,8 +1,9 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
-import { WATER_LEVEL, WORLD_SIZE } from "../config";
+import { ENV, WATER_LEVEL, WORLD_SIZE } from "../config";
 import { HEIGHT_GLSL, heightUniforms } from "./heightmap";
+import { LIGHT } from "../lightState";
 import { SKY, SUN_DIR } from "./Sky";
 
 /**
@@ -15,11 +16,25 @@ import { SKY, SUN_DIR } from "./Sky";
  */
 const VERT = /* glsl */ `
 #include <fog_pars_vertex>
+${HEIGHT_GLSL}
 uniform mat4 uReflMatrix;
+uniform float uTime;
+uniform vec4 uWaves; // height, wavelength, speed, depth at full height
 varying vec3 vWorld;
 varying vec4 vRefl;
+varying float vWave;
 void main(){
   vec4 wp = modelMatrix * vec4(position, 1.0);
+  // rolling swells: three crossing wave trains, calm in the shallows, tallest out deep
+  float depth = ${WATER_LEVEL.toFixed(2)} - sampleField(wp.xz).x;
+  float reach = smoothstep(0.2, uWaves.w, depth);
+  float k = 6.2831 / uWaves.y;
+  float t = uTime * uWaves.z;
+  float w = sin(dot(wp.xz, vec2(0.8, 0.6)) * k - t) * 0.5
+          + sin(dot(wp.xz, vec2(-0.45, 0.89)) * k * 1.37 - t * 1.2) * 0.3
+          + sin(dot(wp.xz, vec2(0.97, -0.26)) * k * 0.71 - t * 0.8) * 0.2;
+  wp.y += w * uWaves.x * reach;
+  vWave = (w * 0.5 + 0.5) * reach;
   vWorld = wp.xyz;
   vRefl = uReflMatrix * wp;
   vec4 mvPosition = viewMatrix * wp;
@@ -38,6 +53,8 @@ uniform vec3 uSkyTop;
 uniform vec3 uSkyHorizon;
 uniform sampler2D uRefl;
 uniform float uUseRefl;
+varying float vWave;
+uniform vec3 uTint; // time of day
 varying vec3 vWorld;
 varying vec4 vRefl;
 float hash2(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
@@ -58,6 +75,11 @@ void main(){
   // body colour: turquoise shallows → deep blue
   float dt = smoothstep(0.0, 4.0, depth);
   vec3 body = mix(uShallow, uDeep, dt);
+  // sunlight caustics rippling over the bed of the shallows
+  vec2 cp = p * 0.6;
+  float web = abs(sin(cp.x + sin(cp.y * 1.3 + t * 0.8) * 1.2) * sin(cp.y + sin(cp.x * 1.1 - t * 0.7) * 1.2));
+  float caustic = smoothstep(0.82, 0.98, 1.0 - web);
+  body += vec3(0.32, 0.36, 0.28) * caustic * (1.0 - smoothstep(0.2, 2.6, depth));
 
   // what the surface reflects: the real scene on High, otherwise the sky gradient
   vec3 r = reflect(-viewDir, n);
@@ -74,6 +96,8 @@ void main(){
   float reflAmt = clamp(fres * 0.8, 0.0, 0.62) * mix(0.35, 1.0, smoothstep(0.2, 2.0, depth));
   vec3 col = mix(body, refl, reflAmt);
 
+  // white crests riding the tops of the swells
+  col = mix(col, vec3(0.94, 0.98, 1.0), smoothstep(0.72, 0.95, vWave) * 0.5);
   // sun glint
   vec3 h = normalize(uSun + viewDir);
   col += vec3(1.0, 0.96, 0.85) * pow(max(dot(n, h), 0.0), 600.0) * 3.0;
@@ -90,8 +114,10 @@ void main(){
   float foam = 1.0 - smoothstep(edge - aa, edge + aa, depth);
   col = mix(col, vec3(0.97, 0.99, 1.0), foam * 0.85);
 
-  float alpha = mix(0.58, 0.95, smoothstep(0.0, 2.2, depth));
+  // clearer in the shallows, so the bed shows through
+  float alpha = mix(0.46, 0.95, smoothstep(0.0, 2.6, depth));
   alpha = max(alpha, foam * 0.9);
+  col *= uTint;
   gl_FragColor = vec4(col, alpha);
   #include <colorspace_fragment>
   #include <fog_fragment>
@@ -187,9 +213,11 @@ export function Water({ heightTex, n, reflect }: { heightTex: THREE.DataTexture;
           uDeep: { value: new THREE.Color("#1a78b8") },
           uSkyTop: { value: new THREE.Color(SKY.top) },
           uSkyHorizon: { value: new THREE.Color(SKY.horizon) },
+          uTint: { value: new THREE.Color(LIGHT.p.tint) },
           uRefl: { value: null },
           uUseRefl: { value: 0 },
           uReflMatrix: { value: new THREE.Matrix4() },
+          uWaves: { value: new THREE.Vector4(ENV.waves.height, ENV.waves.length, ENV.waves.speed, ENV.waves.fullDepth) },
         },
       }),
     [heightTex, n],
@@ -200,7 +228,8 @@ export function Water({ heightTex, n, reflect }: { heightTex: THREE.DataTexture;
   });
   return (
     <mesh material={material} rotation={[-Math.PI / 2, 0, 0]} position={[0, WATER_LEVEL, 0]} renderOrder={2} userData={{ noReflect: true }}>
-      <planeGeometry args={[WORLD_SIZE, WORLD_SIZE, 1, 1]} />
+      {/* finely divided so the waves can move the surface (about 1.75 m per square) */}
+      <planeGeometry args={[WORLD_SIZE, WORLD_SIZE, 320, 320]} />
     </mesh>
   );
 }

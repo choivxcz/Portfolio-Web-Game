@@ -109,6 +109,7 @@ export function structureColliders(): Collider[] {
   for (const lx of [-5.5, 0, 5.5]) add(ac.pos, ay, lx, -1, 5.4); // and its inside
   for (const lx of [-8.4, 8.4]) add(ac.pos, ay, lx, -6.6, 1.8); // corner turrets
   for (const lx of [-6, -3.6, -1.2, 1.2, 3.6, 6]) add(ac.pos, ay, lx, 6.6, 0.6);
+  for (const lx of [-7.4, 7.4]) add(ac.pos, ay, lx, 9.6, 0.45); // lamp posts by the steps
   // Expedition board: the board itself, its lantern, crates and barrel
   const ex = L("projects");
   const ey = facing("projects");

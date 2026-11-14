@@ -3,10 +3,21 @@ import { useMemo, useRef } from "react";
 import * as THREE from "three";
 import { rng } from "../../utils/random";
 import { ENV } from "../config";
+import { LIGHT } from "../lightState";
 
 export const SUN_DIR = new THREE.Vector3(0.55, 0.72, 0.42).normalize();
-/** Sky colours. The horizon is the haze colour, so distant land melts into the sky. */
-export const SKY = { top: ENV.sky.top, mid: ENV.sky.mid, horizon: ENV.haze.color, bottom: ENV.sky.bottom };
+/**
+ * Sky colours for the current time of day (set by lighting.ts). The horizon is the
+ * haze colour, so distant land melts into the sky; `warm` is the haze toward the sun.
+ */
+export const SKY = {
+  top: ENV.sky.top as string,
+  mid: ENV.sky.mid as string,
+  horizon: ENV.haze.color as string,
+  bottom: ENV.sky.bottom as string,
+  halo: ENV.sky.sunHalo as string,
+  warm: ENV.haze.warm as string,
+};
 
 function SkyDome() {
   const material = useMemo(
@@ -20,8 +31,8 @@ function SkyDome() {
           uMid: { value: new THREE.Color(SKY.mid) },
           uHorizon: { value: new THREE.Color(SKY.horizon) },
           uBottom: { value: new THREE.Color(SKY.bottom) },
-          uWarm: { value: new THREE.Color(ENV.haze.warm) },
-          uHalo: { value: new THREE.Color(ENV.sky.sunHalo) },
+          uWarm: { value: new THREE.Color(SKY.warm) },
+          uHalo: { value: new THREE.Color(SKY.halo) },
           uWarmPower: { value: ENV.haze.warmPower },
           uSun: { value: SUN_DIR },
         },
@@ -87,9 +98,19 @@ function cloudTexture(seed: number) {
       puffs.push({ x: cx + (r() - 0.5) * 120 * (0.4 + f), y, rad: 40 + f * 40 + r() * 28 });
     }
   }
+  // many small puffs crowding the upper edge: a billowing, painterly outline
+  // instead of a few big round balls
+  const big = puffs.slice();
+  for (const p of big) {
+    const n = 3 + Math.floor(r() * 3);
+    for (let i = 0; i < n; i++) {
+      const a = -Math.PI * (0.15 + r() * 0.7); // upper half only
+      puffs.push({ x: p.x + Math.cos(a) * p.rad * 0.78, y: p.y + Math.sin(a) * p.rad * 0.78, rad: p.rad * (0.28 + r() * 0.22) });
+    }
+  }
   // draw lower puffs first so the sunlit tops overlap them
   puffs.sort((p, q) => q.y - p.y);
-  ctx.filter = "blur(2px)";
+  ctx.filter = "blur(3.5px)";
   for (const p of puffs) {
     const g = ctx.createRadialGradient(p.x - p.rad * 0.18, p.y - p.rad * 0.35, p.rad * 0.1, p.x, p.y, p.rad);
     // no dark rim on each puff: the edges fade out pale, and the base shading pass does the volume
@@ -146,17 +167,69 @@ function Clouds({ count, animate }: { count: number; animate: boolean }) {
     <group ref={group}>
       {clouds.map((c, i) => (
         <sprite key={i} position={c.pos} scale={[c.w, c.w * 0.5, 1]}>
-          <spriteMaterial map={c.tex} transparent depthWrite={false} fog={false} toneMapped={false} />
+          <spriteMaterial map={c.tex} color={LIGHT.p.clouds} transparent depthWrite={false} fog={false} toneMapped={false} />
         </sprite>
       ))}
     </group>
   );
 }
 
+/** Stars on the upper sky, twinkling gently; shown at dusk and night (LIGHT.p.stars). */
+function Stars({ animate }: { animate: boolean }) {
+  const ref = useRef<THREE.Points>(null);
+  const { geometry, material } = useMemo(() => {
+    const r = rng(91);
+    const n = 1400;
+    const pos = new Float32Array(n * 3);
+    const size = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      // uniform over the upper hemisphere, thinning toward the horizon
+      const y = Math.pow(r(), 0.7) * 0.95 + 0.05;
+      const a = r() * Math.PI * 2;
+      const rad = Math.sqrt(1 - y * y);
+      pos.set([Math.cos(a) * rad * 1400, y * 1400, Math.sin(a) * rad * 1400], i * 3);
+      size[i] = r() < 0.06 ? 3.2 : 1.2 + r() * 1.3;
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    g.setAttribute("aSize", new THREE.BufferAttribute(size, 1));
+    const m = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      toneMapped: false,
+      uniforms: { uTime: { value: 0 }, uAmount: { value: LIGHT.p.stars } },
+      vertexShader: /* glsl */ `
+attribute float aSize;
+uniform float uTime;
+varying float vTw;
+void main(){
+  vec4 p = projectionMatrix * viewMatrix * vec4(position + cameraPosition, 1.0);
+  gl_Position = p.xyww;
+  vTw = 0.65 + 0.35 * sin(uTime * (1.0 + fract(aSize * 7.3) * 2.0) + position.x);
+  gl_PointSize = aSize;
+}`,
+      fragmentShader: /* glsl */ `
+uniform float uAmount;
+varying float vTw;
+void main(){
+  float d = length(gl_PointCoord - 0.5);
+  float a = smoothstep(0.5, 0.1, d) * vTw * uAmount;
+  gl_FragColor = vec4(vec3(0.9, 0.94, 1.0), a);
+}`,
+    });
+    return { geometry: g, material: m };
+  }, []);
+  useFrame((_, dt) => {
+    if (animate) material.uniforms.uTime.value += dt;
+  });
+  return <points ref={ref} geometry={geometry} material={material} frustumCulled={false} renderOrder={-1} userData={{ noReflect: true }} />;
+}
+
 export function Sky({ clouds, animate }: { clouds: number; animate: boolean }) {
   return (
     <>
       <SkyDome />
+      {LIGHT.p.stars > 0 && <Stars animate={animate} />}
       <Clouds count={clouds} animate={animate} />
     </>
   );
